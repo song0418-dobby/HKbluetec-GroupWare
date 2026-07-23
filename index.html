@@ -462,7 +462,7 @@
 
     <script>
         // FIREBASE INITIALIZATION
-        const firebaseConfig = { databaseURL: "https://hkbluetec-default-rtdb.firebaseio.com/:null" };
+        const firebaseConfig = { databaseURL: "https://hkbluetec-groupware-default-rtdb.firebaseio.com" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
@@ -472,8 +472,8 @@
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
         };
 
-        let currentUser = null;
         let globalUsers = DEFAULT_USERS;
+        let currentUser = null;
         let globalDocs = {};
         let globalSchedules = {};
         let currentCalDate = new Date(2026, 6, 1);
