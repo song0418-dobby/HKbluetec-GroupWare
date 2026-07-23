@@ -212,7 +212,7 @@
         </nav>
         <div>
             <span id="currentUserInfo" style="font-weight:700; color:#fff; margin-right:15px;">-</span>
-            <button class="btn" style="padding:4px 8px;" onclick="location.reload()">로그아웃</button>
+            <button class="btn" style="padding:4px 8px;" onclick="doLogout()">로그아웃</button>
         </div>
     </header>
 
@@ -307,7 +307,7 @@
                 <div class="document-wrapper">
                     <div class="doc-header-selector" id="formSelectorArea">
                         <label><i class="fa-solid fa-file-signature" style="color:var(--primary-color);"></i> 결재 양식 선택:</label>
-                        <select id="formTypeSelect" class="form-control" style="width:250px; font-weight:700;">
+                        <select id="formTypeSelect" class="form-control" style="width:250px; font-weight:700;" onchange="changeFormType(this.value)">
                             <option value="구매 품의서">🛒 구매 품의서</option>
                             <option value="휴가 신청서">🌴 휴가 신청서</option>
                             <option value="업무 기안서">📝 업무 기안서</option>
@@ -352,7 +352,8 @@
                         <input type="text" id="docTitleInput" class="form-control" placeholder="문서 제목을 입력하세요.">
                     </div>
 
-                    <div id="formPurchaseArea">
+                    <!-- Dynamic Form Content Area -->
+                    <div id="dynamicFormBody">
                         <table class="doc-table">
                             <tr><th style="width:30%;">구매 목적</th><td><input type="text" id="f_purpose" class="form-control" value="사내 업무용 비품 구매"></td></tr>
                             <tr><th>납품 장소</th><td><input type="text" id="f_location" class="form-control" value="HK블루텍 본사"></td></tr>
@@ -503,7 +504,6 @@
     </div>
 
     <script>
-        // 기본 초기 계정 데이터
         const DEFAULT_USERS = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' },
@@ -517,14 +517,11 @@
         let currentCalDate = new Date(2026, 6, 1);
         let db = null;
 
-        // 1. 로컬스토리지 핸들링
         function getStoredUsers() {
             try {
                 const data = localStorage.getItem('HK_USERS');
                 return data ? JSON.parse(data) : DEFAULT_USERS;
-            } catch(e) {
-                return DEFAULT_USERS;
-            }
+            } catch(e) { return DEFAULT_USERS; }
         }
 
         function setStoredUsers(users) {
@@ -536,9 +533,7 @@
             try {
                 const data = localStorage.getItem('HK_DOCS');
                 return data ? JSON.parse(data) : {};
-            } catch(e) {
-                return {};
-            }
+            } catch(e) { return {}; }
         }
 
         function setStoredDocs(docs) {
@@ -546,13 +541,19 @@
             globalDocs = docs;
         }
 
-        // 2. 초기 데이터 엔진 로드
         function initSystem() {
             globalUsers = getStoredUsers();
             globalDocs = getStoredDocs();
             setStoredUsers(globalUsers);
 
-            // Firebase 실시간 연동 시도
+            // 세션 유지 복원 로직 추가
+            const savedUser = sessionStorage.getItem('HK_CURRENT_USER');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
+                document.getElementById('authScreen').style.display = 'none';
+            }
+
             try {
                 const firebaseConfig = { databaseURL: "https://hkbluetec-default-rtdb.asia-southeast1.firebasedatabase.app" };
                 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
@@ -581,7 +582,7 @@
                     });
                 }
             } catch(e) {
-                console.log("로컬 단독 실행 모드로 시작합니다.");
+                console.log("로컬 독립 모드로 실행합니다.");
             }
 
             renderMemberList();
@@ -589,27 +590,13 @@
             updateBadges();
         }
 
-        // 탭 전환
         function switchAuthTab(type) {
-            const loginTab = document.getElementById('tabLoginBtn');
-            const regTab = document.getElementById('tabRegBtn');
-            const loginForm = document.getElementById('loginForm');
-            const regForm = document.getElementById('registerForm');
-
-            if(type === 'login') {
-                loginTab.classList.add('active');
-                regTab.classList.remove('active');
-                loginForm.style.display = 'block';
-                regForm.style.display = 'none';
-            } else {
-                regTab.classList.add('active');
-                loginTab.classList.remove('active');
-                loginForm.style.display = 'none';
-                regForm.style.display = 'block';
-            }
+            document.getElementById('tabLoginBtn').classList.toggle('active', type === 'login');
+            document.getElementById('tabRegBtn').classList.toggle('active', type === 'register');
+            document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
         }
 
-        // 회원가입 전용 실행 함수
         function doRegister() {
             const id = document.getElementById('regId').value.trim();
             const pw = document.getElementById('regPw').value.trim();
@@ -617,60 +604,44 @@
             const pos = document.getElementById('regPos').value.trim();
             const dept = document.getElementById('regDept').value.trim();
 
-            if(!id || !pw || !name) {
-                return alert('아이디, 비밀번호, 성명은 필수 입력입니다.');
-            }
+            if(!id || !pw || !name) return alert('아이디, 비밀번호, 성명은 필수입니다.');
 
             globalUsers = getStoredUsers();
-
-            if(globalUsers[id]) {
-                return alert('이미 등록되어 있는 아이디입니다. 다른 아이디를 사용해 주세요.');
-            }
+            if(globalUsers[id]) return alert('이미 가입된 아이디입니다.');
 
             const newUser = { id, pw, name, pos: pos || '사원', dept: dept || '일반부서', isOwner: false };
-
-            // 1. LocalStorage 저장
             globalUsers[id] = newUser;
             setStoredUsers(globalUsers);
 
-            // 2. Firebase 실시간 저장
-            if(db) {
-                try { db.ref('groupware/users/' + id).set(newUser); } catch(e){}
-            }
+            if(db) { try { db.ref('groupware/users/' + id).set(newUser); } catch(e){} }
 
-            alert('회원가입이 성공적으로 완료되었습니다! 로그인해 주세요.');
-            
-            // 입력칸 비우고 로그인 화면으로 전환
-            document.getElementById('regId').value = '';
-            document.getElementById('regPw').value = '';
-            document.getElementById('regName').value = '';
-            document.getElementById('loginId').value = id;
-            document.getElementById('loginPw').value = '';
+            alert('회원가입 완료! 로그인해주세요.');
             switchAuthTab('login');
+            document.getElementById('loginId').value = id;
         }
 
-        // 로그인 전용 실행 함수
         function doLogin() {
             const id = document.getElementById('loginId').value.trim();
             const pw = document.getElementById('loginPw').value.trim();
 
-            if(!id || !pw) {
-                return alert('아이디와 비밀번호를 모두 입력해 주세요.');
-            }
-
             globalUsers = getStoredUsers();
             const user = globalUsers[id];
 
-            if(!user || user.pw !== pw) {
-                return alert('아이디 또는 비밀번호가 잘못되었습니다.');
-            }
+            if(!user || user.pw !== pw) return alert('아이디 또는 비밀번호가 올바르지 않습니다.');
 
             currentUser = user;
+            sessionStorage.setItem('HK_CURRENT_USER', JSON.stringify(currentUser));
+
             document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
             document.getElementById('authScreen').style.display = 'none';
 
             showSection('sec-approval');
             renderDocList();
+        }
+
+        function doLogout() {
+            sessionStorage.removeItem('HK_CURRENT_USER');
+            location.reload();
         }
 
         function showSection(secId) {
@@ -683,14 +654,42 @@
             if(element) element.classList.add('active');
         }
 
-        // 전자결재 리스트 출력
+        function changeFormType(val) {
+            const titleHeader = document.getElementById('formTitleHeader');
+            const body = document.getElementById('dynamicFormBody');
+            titleHeader.innerText = `HK블루텍 ${val}`;
+
+            if (val === '구매 품의서') {
+                body.innerHTML = `
+                    <table class="doc-table">
+                        <tr><th style="width:30%;">구매 목적</th><td><input type="text" id="f_purpose" class="form-control" value="사내 비품 및 장비 구매"></td></tr>
+                        <tr><th>납품 장소</th><td><input type="text" id="f_location" class="form-control" value="HK블루텍 본사"></td></tr>
+                    </table>`;
+            } else if (val === '휴가 신청서') {
+                body.innerHTML = `
+                    <table class="doc-table">
+                        <tr><th style="width:30%;">휴가 종류</th><td>
+                            <select class="form-control"><option>연차</option><option>반차</option><option>경조휴가</option></select>
+                        </td></tr>
+                        <tr><th>기간</th><td><input type="date" class="form-control"> ~ <input type="date" class="form-control"></td></tr>
+                        <tr><th>사유</th><td><input type="text" class="form-control" placeholder="휴가 사유 입력"></td></tr>
+                    </table>`;
+            } else {
+                body.innerHTML = `
+                    <table class="doc-table">
+                        <tr><th style="width:30%;">기안 목적</th><td><input type="text" class="form-control" placeholder="업무 기안 목적"></td></tr>
+                        <tr><th>상세 내용</th><td><textarea class="form-control" rows="4" placeholder="상세 내용 기재"></textarea></td></tr>
+                    </table>`;
+            }
+        }
+
         function renderDocList() {
             const tbody = document.getElementById('realDocTbody');
             tbody.innerHTML = '';
             const docsList = Object.values(globalDocs);
 
             if (docsList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">상신된 결재 문서가 없습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">상신된 문서가 없습니다.</td></tr>`;
                 return;
             }
 
@@ -722,6 +721,7 @@
             document.getElementById('app0Box').innerText = currentUser ? `${currentUser.name} ${currentUser.pos}` : '-';
 
             populateUserSelects();
+            changeFormType(document.getElementById('formTypeSelect').value);
             document.getElementById('actionArea').innerHTML = `<button class="btn btn-primary" onclick="submitNewDoc('${newId}')"><i class="fa-solid fa-paper-plane"></i> 즉시 결재 상신</button>`;
         }
 
@@ -756,7 +756,7 @@
             setStoredDocs(globalDocs);
             if(db) { try{ db.ref(`groupware/docs/${docId}`).set(docData); }catch(e){} }
 
-            alert('결재 문서가 상신되었습니다!');
+            alert('결재 문서가 정상 상신되었습니다!');
             showSection('sec-approval');
             renderDocList();
         }
@@ -788,13 +788,12 @@
             renderDocList();
         }
 
-        // 조직도 출력
         function renderOrgAll() {
             const container = document.getElementById('visualOrgContainer');
             container.innerHTML = '';
 
             const users = Object.values(globalUsers);
-            const ceo = users.find(u => u.pos.includes('대표이사') || u.pos.includes('대표')) || users[0];
+            const ceo = users.find(u => u.pos.includes('대표')) || users[0];
 
             let html = `
                 <div class="org-node">
@@ -829,7 +828,6 @@
             html += `</div>`;
             container.innerHTML = html;
 
-            // 명부
             const tbody = document.getElementById('orgTbody');
             tbody.innerHTML = '';
             users.forEach(u => {
@@ -845,7 +843,6 @@
             });
         }
 
-        // 회원목록 출력
         function renderMemberList() {
             const tbody = document.getElementById('memberTbody');
             tbody.innerHTML = '';
@@ -896,7 +893,7 @@
             const pos = document.getElementById('userPos').value.trim();
             const dept = document.getElementById('userDept').value.trim();
 
-            if(!id || !name) return alert('필수 항목을 작성하세요.');
+            if(!id || !name) return alert('필수 항목을 입력해주세요.');
 
             const u = { id, pw, name, pos, dept, isOwner: id === 'song0418_hk' };
             globalUsers[id] = u;
@@ -904,7 +901,7 @@
 
             if(db) { try{ db.ref(`groupware/users/${id}`).set(u); }catch(e){} }
 
-            alert('임직원 정보가 수정/저장되었습니다.');
+            alert('정보가 저장되었습니다.');
             closeModal('userModal');
             renderMemberList(); renderOrgAll();
         }
@@ -917,7 +914,6 @@
             renderMemberList(); renderOrgAll();
         }
 
-        // 캘린더
         function renderCalendar() {
             const year = currentCalDate.getFullYear();
             const month = currentCalDate.getMonth();
@@ -958,7 +954,7 @@
             globalSchedules[id] = { id, title, date, time };
             if(db) { try{ db.ref(`groupware/schedules/${id}`).set(globalSchedules[id]); }catch(e){} }
 
-            alert('일정이 등록되었습니다.');
+            alert('일정이 저장되었습니다.');
             closeModal('schModal');
             renderCalendar();
         }
@@ -972,7 +968,6 @@
             document.getElementById('dashMemCount').innerText = Object.keys(globalUsers).length;
         }
 
-        // 브라우저 로딩 즉시 시스템 시작
         window.onload = initSystem;
     </script>
 </body>
