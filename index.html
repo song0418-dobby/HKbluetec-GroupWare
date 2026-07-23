@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Firebase SDK (v9 호환 모드 - Realtime Database 전용) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -461,9 +462,20 @@
     </div>
 
     <script>
-        // FIREBASE INITIALIZATION
-        const firebaseConfig = { databaseURL: "https://hkbluetec-default-rtdb.asia-southeast1.firebasedatabase.app" };
-        firebase.initializeApp(firebaseConfig);
+        // FIREBASE REALTIME DB INITIALIZATION (올바른 DB 설정 및 URL 정제)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAgEmCFvCI7Ou8jPkfngObTLJGaYPQbz18",
+            authDomain: "hkbluetec.firebaseapp.com",
+            databaseURL: "https://hkbluetec-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hkbluetec",
+            storageBucket: "hkbluetec.firebasestorage.app",
+            messagingSenderId: "997191589965",
+            appId: "1:997191589965:web:e29d58d70c8e8d3d24fc04"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
 
         // DEFAULT INITIAL DATA
@@ -476,7 +488,6 @@
         let globalUsers = DEFAULT_USERS;
         let globalDocs = {};
         let globalSchedules = {};
-        let currentCalDate = new Date(2026, 6, 1);
 
         // INITIALIZE SYSTEM & REALTIME LISTENERS
         function initRealtimeSync() {
@@ -490,17 +501,14 @@
                 } catch(e) { sessionStorage.removeItem('HK_CURRENT_USER'); }
             }
 
-            const localUserBackup = localStorage.getItem('HK_USERS_BACKUP');
-            if(localUserBackup) { globalUsers = Object.assign({}, DEFAULT_USERS, JSON.parse(localUserBackup)); }
-
             // 1. 실시간 회원가입/유저 동기화
             db.ref('groupware/users').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     globalUsers = data;
-                    localStorage.setItem('HK_USERS_BACKUP', JSON.stringify(globalUsers));
                 } else {
                     db.ref('groupware/users').set(DEFAULT_USERS);
+                    globalUsers = DEFAULT_USERS;
                 }
                 renderMemberList(); renderOrgAll(); updateBadges(); populateUserSelects();
             });
@@ -559,16 +567,19 @@
 
             if(globalUsers[id]) return alert('이미 존재하는 아이디입니다.');
 
-            const newUser = { id, pw, name, pos, dept, isOwner: false };
-            globalUsers[id] = newUser;
-            localStorage.setItem('HK_USERS_BACKUP', JSON.stringify(globalUsers));
+            const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
             
-            db.ref(`groupware/users/${id}`).set(newUser);
-
-            alert('회원가입이 완료되었습니다! 조직도와 임직원 명부에 바로 등록되었습니다.');
-            document.getElementById('registerForm').reset();
-            switchAuthTab('login');
-            document.getElementById('loginId').value = id;
+            // Firebase Realtime DB 전역 저장
+            db.ref(`groupware/users/${id}`).set(newUser, (err) => {
+                if(!err) {
+                    alert('회원가입이 완료되었습니다! 모든 사용자의 목록에 실시간 수신됩니다.');
+                    document.getElementById('registerForm').reset();
+                    switchAuthTab('login');
+                    document.getElementById('loginId').value = id;
+                } else {
+                    alert('가입 실패: ' + err.message);
+                }
+            });
         }
 
         function handleLogout() {
@@ -587,7 +598,7 @@
             if(element) element.classList.add('active');
         }
 
-        // DYNAMIC FORM CREATOR (항목 추가/삭제 가능 품의서)
+        // DYNAMIC FORM CREATOR
         function changeFormType(val) {
             document.getElementById('formTitleHeader').innerText = `HK블루텍 ${val}`;
             const body = document.getElementById('dynamicFormBody');
@@ -666,7 +677,6 @@
             }
         }
 
-        // 품의서 항목 추가 및 삭제 로직
         function addFormRow() {
             const tbody = document.getElementById('itemTbody');
             const tr = document.createElement('tr');
@@ -787,10 +797,12 @@
                 status: 'pending'
             };
 
-            globalDocs[docId] = docData;
-            db.ref(`groupware/docs/${docId}`).set(docData);
-            alert('전자결재가 상신되었습니다! 모든 임직원 화면에 실시간 수신됩니다.');
-            showSection('sec-approval');
+            db.ref(`groupware/docs/${docId}`).set(docData, (err) => {
+                if(!err) {
+                    alert('전자결재가 상신되었습니다! 모든 임직원 화면에 실시간 수신됩니다.');
+                    showSection('sec-approval');
+                }
+            });
         }
 
         function viewDetail(docId) {
@@ -879,11 +891,13 @@
 
             if(!id || !name) return alert('필수 입력 항목이 누락되었습니다.');
 
-            const u = { id, pw, name, pos, dept, isOwner: id === 'song0418_hk' };
-            db.ref(`groupware/users/${id}`).set(u);
-
-            alert('임직원 정보가 즉시 업데이트되었습니다.');
-            closeModal('userModal');
+            const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
+            db.ref(`groupware/users/${id}`).set(u, (err) => {
+                if(!err) {
+                    alert('임직원 정보가 즉시 업데이트되었습니다.');
+                    closeModal('userModal');
+                }
+            });
         }
 
         // CALENDAR
@@ -906,9 +920,12 @@
             const id = 'SCH-' + Date.now();
 
             const sch = { id, title, date, time };
-            db.ref(`groupware/schedules/${id}`).set(sch);
-            alert('일정이 등록되었습니다.');
-            closeModal('schModal');
+            db.ref(`groupware/schedules/${id}`).set(sch, (err) => {
+                if(!err) {
+                    alert('일정이 등록되었습니다.');
+                    closeModal('schModal');
+                }
+            });
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -922,21 +939,4 @@
         window.onload = initRealtimeSync;
     </script>
 </body>
-    <!-- Firebase 실시간 연동 코드 -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAgEmCFvCI7Ou8jPkfngObTLJGaYPQbz18",
-    authDomain: "hkbluetec.firebaseapp.com",
-    projectId: "hkbluetec",
-    storageBucket: "hkbluetec.firebasestorage.app",
-    messagingSenderId: "997191589965",
-    appId: "1:997191589965:web:e29d58d70c8e8d3d24fc04"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-</script>
 </html>
