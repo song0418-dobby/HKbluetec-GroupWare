@@ -3,200 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HK블루텍 전자결재 그룹웨어</title>
-    <!-- Tailwind CSS CDN -->
+    <title>HK블루텍 그룹웨어</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDK (v9 호환 모드) -->
+    <!-- Firebase SDK (v9 호환) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; }
-        .modal { transition: opacity 0.25s ease; }
+        body { font-family: 'Noto Sans KR', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-100 text-gray-800 antialiased min-h-screen flex flex-col">
+<body class="bg-gray-100 text-gray-800">
 
-    <!-- 상단 네비게이션 헤더 -->
-    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-3">
-                    <span class="text-xl font-bold tracking-wider text-blue-400">🔷 HK블루텍 GROUPWARE</span>
-                    <span id="sync-badge" class="text-xs bg-emerald-600/80 text-emerald-100 px-2.5 py-1 rounded-full font-medium">실시간 동기화중</span>
-                </div>
-                <nav class="hidden md:flex space-x-6 text-sm font-semibold">
-                    <button onclick="switchTab('dashboard')" class="hover:text-blue-400 transition">홈</button>
-                    <button onclick="switchTab('approval')" class="hover:text-blue-400 transition">전자결재</button>
-                    <button onclick="switchTab('calendar')" class="hover:text-blue-400 transition">일정 캘린더</button>
-                    <button onclick="switchTab('org')" class="hover:text-blue-400 transition">조직도</button>
-                    <button onclick="switchTab('members')" class="hover:text-blue-400 transition">회원 및 권한 관리</button>
-                </nav>
-                <div>
-                    <button id="logout-btn" onclick="handleLogout()" class="hidden bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-lg text-sm font-semibold transition shadow">로그아웃</button>
-                </div>
-            </div>
+    <!-- 상단 네비게이션 -->
+    <nav class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md">
+        <div class="flex items-center space-x-3">
+            <span class="text-xl font-bold tracking-wider text-blue-400">🔷 HK블루텍 GROUPWARE</span>
+            <span class="text-xs bg-emerald-600 px-2 py-1 rounded-full">실시간 연동중</span>
         </div>
-    </header>
+        <div class="space-x-4 text-sm font-medium">
+            <button onclick="switchTab('dashboard')" class="hover:text-blue-300">홈</button>
+            <button onclick="switchTab('approval')" class="hover:text-blue-300">전자결재</button>
+            <button onclick="switchTab('calendar')" class="hover:text-blue-300">일정 캘린더</button>
+            <button onclick="switchTab('org')" class="hover:text-blue-300">조직도 관리</button>
+            <button onclick="switchTab('members')" class="hover:text-blue-300">회원 관리</button>
+            <button id="logout-btn" onclick="handleLogout()" class="hidden bg-red-600 hover:bg-red-700 px-3 py-1 rounded">로그아웃</button>
+        </div>
+    </nav>
 
-    <!-- 메인 컨텐츠 영역 -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- 메인 컨텐츠 -->
+    <main class="container mx-auto mt-6 p-4">
         
-        <!-- 대시보드 (홈) -->
-        <section id="dashboard" class="tab-content space-y-6">
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-slate-800">대시보드</h1>
-            </div>
+        <!-- 대시보드 -->
+        <section id="dashboard" class="tab-content">
+            <h2 class="text-2xl font-bold mb-4">대시보드</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-sm font-bold text-slate-500">📄 진행중인 전자결재</p>
-                    <p id="dash-approval-count" class="text-4xl font-extrabold text-blue-600 mt-2">0 건</p>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm font-bold">📄 진행중인 전자결재</h3>
+                    <p id="dash-approval-count" class="text-3xl font-bold mt-2 text-blue-600">0 건</p>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-sm font-bold text-slate-500">📅 등록된 사내 일정</p>
-                    <p id="dash-calendar-count" class="text-4xl font-extrabold text-emerald-600 mt-2">0 건</p>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm font-bold">📅 등록된 사내 일정</h3>
+                    <p id="dash-calendar-count" class="text-3xl font-bold mt-2 text-emerald-600">0 건</p>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-sm font-bold text-slate-500">👥 등록 임직원 수</p>
-                    <p id="dash-user-count" class="text-4xl font-extrabold text-indigo-600 mt-2">0 명</p>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm font-bold">👥 등록 임직원 수</h3>
+                    <p id="dash-user-count" class="text-3xl font-bold mt-2 text-purple-600">0 명</p>
                 </div>
             </div>
         </section>
 
         <!-- 전자결재 -->
-        <section id="approval" class="tab-content hidden space-y-6">
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-slate-800">전자결재함</h1>
-                <button onclick="openApprovalModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition">+ 새 결재 작성 (구매품의서)</button>
+        <section id="approval" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">전자결재함</h2>
+                <button onclick="openApprovalModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ 새 결재 작성 (구매품의서)</button>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <div id="approval-list" class="space-y-4">
-                    <p class="text-center text-slate-400 py-8">상신된 결재 문서가 없습니다.</p>
+            <div class="bg-white rounded-lg shadow p-4">
+                <div id="approval-list" class="space-y-3">
+                    <p class="text-center text-gray-400 py-6">상신된 결재 문서가 없습니다.</p>
                 </div>
             </div>
         </section>
 
-        <!-- 회원 및 권한 관리 -->
-        <section id="members" class="tab-content hidden space-y-6">
-            <h1 class="text-2xl font-bold text-slate-800">임직원 및 회원 관리</h1>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <!-- 회원 관리 -->
+        <section id="members" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-4">임직원 및 회원 관리</h2>
+            <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            <th class="p-4">아이디</th>
-                            <th class="p-4">이름</th>
-                            <th class="p-4">직급</th>
-                            <th class="p-4">부서</th>
-                            <th class="p-4">권한</th>
+                        <tr class="bg-gray-100 border-b">
+                            <th class="p-3">아이디</th>
+                            <th class="p-3">이름</th>
+                            <th class="p-3">직급</th>
+                            <th class="p-3">부서</th>
+                            <th class="p-3">권한</th>
                         </tr>
                     </thead>
-                    <tbody id="user-list-tbody" class="divide-y divide-slate-100 text-sm">
-                        <tr><td colspan="5" class="p-6 text-center text-slate-400">등록된 회원이 없습니다.</td></tr>
+                    <tbody id="user-list-tbody">
+                        <tr><td colspan="5" class="p-4 text-center text-gray-400">등록된 회원이 없습니다.</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- 일정 캘린더 -->
-        <section id="calendar" class="tab-content hidden space-y-6">
-            <h1 class="text-2xl font-bold text-slate-800">사내 일정 캘린더</h1>
-            <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-slate-500">사내 공유 일정 캘린더 기능 영역입니다.</div>
+        <!-- 캘린더 / 조직도 -->
+        <section id="calendar" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-4">일정 캘린더</h2>
+            <div class="bg-white p-6 rounded shadow">사내 공유 일정 캘린더 영역입니다.</div>
         </section>
-
-        <!-- 조직도 -->
-        <section id="org" class="tab-content hidden space-y-6">
-            <h1 class="text-2xl font-bold text-slate-800">임직원 조직도</h1>
-            <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-slate-500">사내 조직도 관리 영역입니다.</div>
+        <section id="org" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-4">조직도</h2>
+            <div class="bg-white p-6 rounded shadow">사내 조직도 관리 영역입니다.</div>
         </section>
     </main>
 
-    <!-- 팝업 모달 1: 로그인 / 회원가입 -->
-    <div id="auth-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-slate-100">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-extrabold text-slate-800">🔷 HK블루텍</h2>
-                <p class="text-xs text-slate-500 mt-1">사내 실시간 연동 그룹웨어</p>
+    <!-- 로그인 / 회원가입 팝업 -->
+    <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div class="flex border-b mb-4">
+                <button id="tab-login-btn" onclick="switchAuthMode('login')" class="w-1/2 py-2 font-bold text-blue-600 border-b-2 border-blue-600">로그인</button>
+                <button id="tab-signup-btn" onclick="switchAuthMode('signup')" class="w-1/2 py-2 font-bold text-gray-400">회원가입</button>
             </div>
 
-            <div class="flex border-b border-slate-200 mb-6">
-                <button id="tab-login-btn" onclick="switchAuthMode('login')" class="w-1/2 pb-3 font-bold text-blue-600 border-b-2 border-blue-600 transition">로그인</button>
-                <button id="tab-signup-btn" onclick="switchAuthMode('signup')" class="w-1/2 pb-3 font-bold text-slate-400 transition">회원가입</button>
-            </div>
-
-            <!-- 로그인 폼 -->
+            <!-- 로그인 -->
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">아이디</label>
-                    <input type="text" id="login-id" required class="w-full border border-slate-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">아이디</label>
+                    <input type="text" id="login-id" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">비밀번호</label>
-                    <input type="password" id="login-pw" required class="w-full border border-slate-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+                    <input type="password" id="login-pw" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-md text-sm mt-2">로그인</button>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">로그인</button>
             </form>
 
-            <!-- 회원가입 폼 -->
+            <!-- 회원가입 -->
             <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-3 hidden">
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">아이디</label>
-                    <input type="text" id="signup-id" required class="w-full border border-slate-300 p-2 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">아이디</label>
+                    <input type="text" id="signup-id" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">비밀번호 (당사자만 관리 가능)</label>
-                    <input type="password" id="signup-pw" required class="w-full border border-slate-300 p-2 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호 (당사자만 관리)</label>
+                    <input type="password" id="signup-pw" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">이름</label>
-                    <input type="text" id="signup-name" required class="w-full border border-slate-300 p-2 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">이름</label>
+                    <input type="text" id="signup-name" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">직급</label>
-                        <input type="text" id="signup-position" placeholder="예: 대리" class="w-full border border-slate-300 p-2 rounded-lg outline-none text-sm">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">직급</label>
+                        <input type="text" id="signup-position" placeholder="예: 대리" class="w-full border p-2 rounded outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">부서</label>
-                        <input type="text" id="signup-dept" placeholder="예: 구매팀" class="w-full border border-slate-300 p-2 rounded-lg outline-none text-sm">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">부서</label>
+                        <input type="text" id="signup-dept" placeholder="예: 구매팀" class="w-full border p-2 rounded outline-none">
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold transition shadow-md text-sm mt-2">회원가입 신청</button>
+                <button type="submit" class="w-full bg-emerald-600 text-white py-2 rounded font-bold hover:bg-emerald-700">회원가입</button>
             </form>
         </div>
     </div>
 
-    <!-- 팝업 모달 2: 구매품의서 결재 작성 -->
-    <div id="approval-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 border border-slate-100">
-            <h3 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b">📝 구매품의서 작성</h3>
+    <!-- 결재 상신 팝업 모달 -->
+    <div id="approval-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
+            <h3 class="text-xl font-bold mb-4 pb-2 border-b">📝 구매품의서 결재 상신</h3>
             <form onsubmit="handleCreateApproval(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">품의 제목</label>
-                    <input type="text" id="app-title" required placeholder="예: 자재 구매 건의" class="w-full border border-slate-300 p-2.5 rounded-lg outline-none text-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">품의 제목</label>
+                    <input type="text" id="app-title" required placeholder="예: 사무용품 및 자재 구매 건" class="w-full border p-2 rounded outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">품목 및 상세 내용</label>
-                    <textarea id="app-content" rows="4" required placeholder="구매 품목, 가격, 사유 등을 입력하세요." class="w-full border border-slate-300 p-2.5 rounded-lg outline-none text-sm"></textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">상세 품목 및 내역</label>
+                    <textarea id="app-content" rows="4" required placeholder="품목명, 수량, 금액, 사유 작성" class="w-full border p-2 rounded outline-none"></textarea>
                 </div>
                 <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="closeApprovalModal()" class="px-4 py-2 border rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50">취소</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow">상신하기</button>
+                    <button type="button" onclick="closeApprovalModal()" class="px-4 py-2 border rounded hover:bg-gray-50">취소</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">상신하기</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- 전체 제어 메인 자바스크립트 -->
+    <!-- 스크립트 (실시간 연동 로직 포함) -->
     <script>
-        // =================================================================
-        // 1. 전역 변수 선언 (오류 방지를 위해 상단 배치)
-        // =================================================================
+        // 1. 전역 변수 선언 (에러 발생 사전 방지)
         let globalUsers = [];
         let globalApprovals = [];
         let currentUser = null;
 
-        // =================================================================
-        // 2. Firebase 설정 및 실시간 DB 초기화
-        // =================================================================
+        // 2. Firebase 설정 (databaseURL 정확히 연결)
         const firebaseConfig = {
             apiKey: "AIzaSy...",
             authDomain: "hkbluetec-groupware.firebaseapp.com",
@@ -212,28 +192,22 @@
         }
         const db = firebase.database();
 
-        // =================================================================
-        // 3. 실시간 데이터 동기화 리스너 (.on('value'))
-        // =================================================================
-        // 회원 목록 실시간 공유
+        // 3. 실시간 DB 감시 (.on) -> 데이터 전송 시 모든 PC 자동 갱신
         db.ref('users').on('value', (snapshot) => {
             const data = snapshot.val();
             globalUsers = data ? Object.values(data) : [];
             renderUserList();
             updateDashboard();
-        }, (err) => console.error("회원 DB 수신 오류:", err));
+        });
 
-        // 전자결재 실시간 공유
         db.ref('approvals').on('value', (snapshot) => {
             const data = snapshot.val();
             globalApprovals = data ? Object.values(data) : [];
             renderApprovalList();
             updateDashboard();
-        }, (err) => console.error("결재 DB 수신 오류:", err));
+        });
 
-        // =================================================================
-        // 4. 인증 / 회원가입 / 로그인 처리
-        // =================================================================
+        // 4. 회원가입 / 로그인
         function handleSignup(e) {
             e.preventDefault();
             const id = document.getElementById('signup-id').value.trim();
@@ -242,12 +216,6 @@
             const position = document.getElementById('signup-position').value.trim() || '사원';
             const dept = document.getElementById('signup-dept').value.trim() || '미정';
 
-            if (!id || !pw || !name) {
-                alert('필수 항목을 모두 입력해 주세요.');
-                return;
-            }
-
-            // 아이디 중복 확인
             if (globalUsers.some(u => u.id === id)) {
                 alert('이미 등록된 아이디입니다.');
                 return;
@@ -255,7 +223,7 @@
 
             const newUser = {
                 id: id,
-                pw: pw, // 비밀번호 저장
+                pw: pw,
                 name: name,
                 position: position,
                 dept: dept,
@@ -263,12 +231,12 @@
                 createdAt: new Date().toISOString()
             };
 
-            // Firebase Realtime DB에 실시간 저장 (모든 PC 공유)
+            // Firebase 서버 저장
             db.ref('users/' + id).set(newUser, (err) => {
                 if (err) {
-                    alert('회원가입 실패: ' + err.message);
+                    alert('가입 실패: ' + err.message);
                 } else {
-                    alert('회원가입이 완료되었습니다. 등록된 계정으로 로그인하세요.');
+                    alert('회원가입이 완료되었습니다!');
                     switchAuthMode('login');
                     document.getElementById('signup-form').reset();
                 }
@@ -280,27 +248,26 @@
             const id = document.getElementById('login-id').value.trim();
             const pw = document.getElementById('login-pw').value.trim();
 
-            // 1. 고정 최고관리자 계정 예외 처리
+            // 최고관리자 고정 계정
             if (id === 'song0418_hk' && pw === '1234') {
-                currentUser = { id: 'song0418_hk', name: '최고관리자', role: '최고관리자', dept: '임원진' };
+                currentUser = { id: 'song0418_hk', name: '최고관리자', role: '최고관리자', dept: '관리부' };
                 onLoginSuccess();
                 return;
             }
 
-            // 2. 실시간 DB 회원 조회
             const user = globalUsers.find(u => u.id === id && u.pw === pw);
             if (user) {
                 currentUser = user;
                 onLoginSuccess();
             } else {
-                alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+                alert('아이디 또는 비밀번호가 틀렸습니다.');
             }
         }
 
         function onLoginSuccess() {
             document.getElementById('auth-modal').classList.add('hidden');
             document.getElementById('logout-btn').classList.remove('hidden');
-            alert(`${currentUser.name} (${currentUser.role || '임직원'})님, 환영합니다!`);
+            alert(`${currentUser.name}님 환영합니다.`);
         }
 
         function handleLogout() {
@@ -309,14 +276,9 @@
             document.getElementById('logout-btn').classList.add('hidden');
         }
 
-        // =================================================================
-        // 5. 전자결재 상신 처리
-        // =================================================================
+        // 5. 전자결재 상신
         function openApprovalModal() {
-            if (!currentUser) {
-                alert('로그인이 필요합니다.');
-                return;
-            }
+            if (!currentUser) { alert('로그인이 필요합니다.'); return; }
             document.getElementById('approval-modal').classList.remove('hidden');
         }
 
@@ -335,17 +297,14 @@
                 title: title,
                 content: content,
                 author: currentUser.name,
-                authorId: currentUser.id,
-                dept: currentUser.dept || '미정',
+                dept: currentUser.dept || '기타',
                 status: '대기중',
                 date: new Date().toLocaleDateString('ko-KR')
             };
 
             db.ref('approvals/' + appKey).set(newApproval, (err) => {
-                if (err) {
-                    alert('결재 상신 실패: ' + err.message);
-                } else {
-                    alert('구매품의서가 성공적으로 상신되었습니다.');
+                if (!err) {
+                    alert('구매품의서가 결재 상신되었습니다.');
                     closeApprovalModal();
                     document.getElementById('app-title').value = '';
                     document.getElementById('app-content').value = '';
@@ -353,61 +312,53 @@
             });
         }
 
-        // =================================================================
-        // 6. UI 렌더링 함수들
-        // =================================================================
+        // 6. UI 화면 갱신
         function switchAuthMode(mode) {
             if (mode === 'login') {
                 document.getElementById('login-form').classList.remove('hidden');
                 document.getElementById('signup-form').classList.add('hidden');
-                document.getElementById('tab-login-btn').className = "w-1/2 pb-3 font-bold text-blue-600 border-b-2 border-blue-600 transition";
-                document.getElementById('tab-signup-btn').className = "w-1/2 pb-3 font-bold text-slate-400 transition";
+                document.getElementById('tab-login-btn').className = "w-1/2 py-2 font-bold text-blue-600 border-b-2 border-blue-600";
+                document.getElementById('tab-signup-btn').className = "w-1/2 py-2 font-bold text-gray-400";
             } else {
                 document.getElementById('login-form').classList.add('hidden');
                 document.getElementById('signup-form').classList.remove('hidden');
-                document.getElementById('tab-login-btn').className = "w-1/2 pb-3 font-bold text-slate-400 transition";
-                document.getElementById('tab-signup-btn').className = "w-1/2 pb-3 font-bold text-emerald-600 border-b-2 border-emerald-600 transition";
+                document.getElementById('tab-login-btn').className = "w-1/2 py-2 font-bold text-gray-400";
+                document.getElementById('tab-signup-btn').className = "w-1/2 py-2 font-bold text-emerald-600 border-b-2 border-emerald-600";
             }
         }
 
         function renderUserList() {
             const tbody = document.getElementById('user-list-tbody');
-            if (!globalUsers || globalUsers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">등록된 회원이 없습니다.</td></tr>`;
+            if (globalUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">등록된 회원이 없습니다.</td></tr>`;
                 return;
             }
-
             tbody.innerHTML = globalUsers.map(u => `
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="p-4 font-semibold text-slate-700">${u.id}</td>
-                    <td class="p-4 font-bold text-slate-900">${u.name}</td>
-                    <td class="p-4 text-slate-600">${u.position || '-'}</td>
-                    <td class="p-4 text-slate-600">${u.dept || '-'}</td>
-                    <td class="p-4"><span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-bold">${u.role || '일반'}</span></td>
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 font-medium">${u.id}</td>
+                    <td class="p-3 font-bold">${u.name}</td>
+                    <td class="p-3">${u.position || '-'}</td>
+                    <td class="p-3">${u.dept || '-'}</td>
+                    <td class="p-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${u.role || '일반'}</span></td>
                 </tr>
             `).join('');
         }
 
         function renderApprovalList() {
             const container = document.getElementById('approval-list');
-            if (!globalApprovals || globalApprovals.length === 0) {
-                container.innerHTML = `<p class="text-center text-slate-400 py-8">상신된 결재 문서가 없습니다.</p>`;
+            if (globalApprovals.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-400 py-6">상신된 결재 문서가 없습니다.</p>`;
                 return;
             }
-
             container.innerHTML = globalApprovals.map(a => `
-                <div class="p-5 border border-slate-200 rounded-xl flex justify-between items-center bg-slate-50/50 hover:bg-slate-50 transition shadow-sm">
+                <div class="p-4 border rounded flex justify-between items-center bg-gray-50">
                     <div>
-                        <div class="flex items-center space-x-2">
-                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded font-bold">구매품의서</span>
-                            <h4 class="font-bold text-slate-800 text-base">${a.title}</h4>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-1">기안자: <b>${a.author}</b> (${a.dept}) | 기안일: ${a.date}</p>
-                        <p class="text-sm text-slate-600 mt-2 bg-white p-2.5 rounded border border-slate-100">${a.content}</p>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded font-bold">구매품의서</span>
+                        <h4 class="font-bold text-lg inline-block ml-2">${a.title}</h4>
+                        <p class="text-xs text-gray-500 mt-1">기안자: ${a.author} (${a.dept}) | 기안일: ${a.date}</p>
+                        <p class="text-sm text-gray-700 mt-2 bg-white p-2 rounded border">${a.content}</p>
                     </div>
-                    <div>
-                        <span class="bg-amber-100 text-amber-800 text-xs px-3 py-1.5 rounded-full font-extrabold">${a.status || '대기중'}</span>
-                    </div>
+                    <span class="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full font-bold">${a.status || '대기중'}</span>
                 </div>
             `).join('');
         }
