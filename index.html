@@ -3,375 +3,940 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HK블루텍 그룹웨어</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDK (v9 호환) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <title>HK블루텍 전자결재 그룹웨어</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; }
+        :root {
+            --primary-color: #0284c7;
+            --primary-hover: #0369a1;
+            --primary-light: #e0f2fe;
+            --secondary-color: #475569;
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --border-color: #cbd5e1;
+            --border-light: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --danger-color: #dc2626;
+            --success-color: #16a34a;
+            --warning-color: #d97706;
+            --sidebar-width: 250px;
+            --header-height: 60px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); font-size: 14px; line-height: 1.5; height: 100vh; overflow: hidden; }
+
+        /* Auth Screen */
+        #authScreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.88); display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .auth-card { background: #fff; width: 420px; padding: 32px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); }
+        .auth-tabs { display: flex; border-bottom: 2px solid var(--border-light); margin-bottom: 20px; }
+        .auth-tab { flex: 1; text-align: center; padding: 10px; font-weight: 700; cursor: pointer; color: var(--text-muted); }
+        .auth-tab.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
+
+        /* Header & Navigation */
+        .app-header {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+            background-color: #0f172a; color: #fff; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 20px; z-index: 1000;
+        }
+        .header-brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; }
+        .header-nav { display: flex; gap: 4px; height: 100%; }
+        .header-nav-item {
+            padding: 0 16px; height: 100%; display: flex; align-items: center; gap: 8px;
+            color: #94a3b8; text-decoration: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent;
+        }
+        .header-nav-item:hover, .header-nav-item.active { color: #fff; border-bottom-color: #38bdf8; background: rgba(255,255,255,0.05); }
+
+        /* Container Layout */
+        .app-container { display: flex; width: 100%; margin-top: var(--header-height); height: calc(100vh - var(--header-height)); }
+        .app-sidebar {
+            width: var(--sidebar-width); background-color: var(--bg-surface); border-right: 1px solid var(--border-light);
+            display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;
+        }
+        .btn-new-doc {
+            margin: 0 16px 20px; padding: 12px; background-color: var(--primary-color); color: #fff; border: none;
+            border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .menu-list { list-style: none; }
+        .menu-item a { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; color: var(--secondary-color); text-decoration: none; font-weight: 600; cursor: pointer; }
+        .menu-item a:hover, .menu-item.active a { background-color: var(--primary-light); color: var(--primary-color); }
+
+        .app-main { flex: 1; overflow-y: auto; padding: 24px; background-color: var(--bg-body); }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+
+        /* Basic UI components */
+        .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid var(--border-color); background-color: #fff; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .btn-danger { background-color: var(--danger-color); color: #fff; border-color: var(--danger-color); }
+        .btn-success { background-color: var(--success-color); color: #fff; border-color: var(--success-color); }
+
+        .card { background: #fff; border-radius: 8px; padding: 20px; border: 1px solid var(--border-light); margin-bottom: 20px; }
+        .data-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--border-light); }
+        .data-table th, .data-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-light); }
+        .data-table th { background: #f8fafc; font-weight: 700; font-size: 12px; }
+
+        .badge-status { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+        .badge-pending { background: #fef3c7; color: var(--warning-color); }
+        .badge-approved { background: #dcfce7; color: var(--success-color); }
+        .badge-admin { background: #e0f2fe; color: #0284c7; border: 1px solid #0284c7; }
+
+        /* Electronic Approval Standard Paper */
+        .document-wrapper { background: #fff; max-width: 900px; margin: 0 auto; padding: 35px 40px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .doc-header-selector { background: #f1f5f9; padding: 12px 20px; border-radius: 6px; display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .doc-title-main { text-align: center; font-size: 26px; font-weight: 800; margin-bottom: 25px; color: #0f172a; text-decoration: underline; text-underline-offset: 6px; }
+
+        .doc-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; }
+        .doc-table th, .doc-table td { border: 1px solid #94a3b8; padding: 8px 10px; text-align: center; }
+        .doc-table th { background: #f1f5f9; font-weight: 700; color: #334155; }
+
+        .approval-line-table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; }
+        .approval-line-table th, .approval-line-table td { border: 1px solid #94a3b8; padding: 6px; text-align: center; }
+        .approval-line-table th { background: #f1f5f9; font-weight: 700; }
+        .approval-line-table .col-head { width: 40px !important; background: #e2e8f0; font-weight: 800; }
+        .approval-line-table .col-target { width: 32% !important; }
+
+        .form-control { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; }
+
+        /* Calendar Styles */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--border-color); background: #fff; }
+        .calendar-day-head { background: #f1f5f9; text-align: center; padding: 8px; font-weight: 700; border-bottom: 1px solid var(--border-color); font-size: 12px; }
+        .calendar-cell { min-height: 90px; border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); padding: 4px; background: #fff; }
+        .calendar-date-num { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: var(--secondary-color); }
+        .calendar-event { background: var(--primary-light); color: var(--primary-color); padding: 2px 4px; border-radius: 3px; font-size: 11px; margin-bottom: 2px; font-weight: 600; }
+
+        /* Org Tree Chart */
+        .org-tree { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px 0; }
+        .org-node { background: #fff; border: 2px solid var(--primary-color); border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 140px; }
+        .org-branches { display: flex; gap: 30px; position: relative; }
+        .org-branches::before { content: ''; position: absolute; top: -10px; left: 10%; right: 10%; height: 2px; background: var(--border-color); }
+        .org-branch { display: flex; flex-direction: column; align-items: center; position: relative; }
+        .org-branch::before { content: ''; position: absolute; top: -10px; width: 2px; height: 10px; background: var(--border-color); }
+
+        /* Modal Area */
+        .modal-overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9000; }
+        .modal-body { background:#fff; width:480px; border-radius:8px; padding:24px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display:block; font-weight:700; margin-bottom:4px; font-size:12px; }
+        .sync-badge { background: #16a34a; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body>
 
-    <!-- 상단 네비게이션 -->
-    <nav class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md">
-        <div class="flex items-center space-x-3">
-            <span class="text-xl font-bold tracking-wider text-blue-400">🔷 HK블루텍 GROUPWARE</span>
-            <span class="text-xs bg-emerald-600 px-2 py-1 rounded-full">실시간 연동중</span>
-        </div>
-        <div class="space-x-4 text-sm font-medium">
-            <button onclick="switchTab('dashboard')" class="hover:text-blue-300">홈</button>
-            <button onclick="switchTab('approval')" class="hover:text-blue-300">전자결재</button>
-            <button onclick="switchTab('calendar')" class="hover:text-blue-300">일정 캘린더</button>
-            <button onclick="switchTab('org')" class="hover:text-blue-300">조직도 관리</button>
-            <button onclick="switchTab('members')" class="hover:text-blue-300">회원 관리</button>
-            <button id="logout-btn" onclick="handleLogout()" class="hidden bg-red-600 hover:bg-red-700 px-3 py-1 rounded">로그아웃</button>
-        </div>
-    </nav>
-
-    <!-- 메인 컨텐츠 -->
-    <main class="container mx-auto mt-6 p-4">
-        
-        <!-- 대시보드 -->
-        <section id="dashboard" class="tab-content">
-            <h2 class="text-2xl font-bold mb-4">대시보드</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-gray-500 text-sm font-bold">📄 진행중인 전자결재</h3>
-                    <p id="dash-approval-count" class="text-3xl font-bold mt-2 text-blue-600">0 건</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-gray-500 text-sm font-bold">📅 등록된 사내 일정</h3>
-                    <p id="dash-calendar-count" class="text-3xl font-bold mt-2 text-emerald-600">0 건</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-gray-500 text-sm font-bold">👥 등록 임직원 수</h3>
-                    <p id="dash-user-count" class="text-3xl font-bold mt-2 text-purple-600">0 명</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 전자결재 -->
-        <section id="approval" class="tab-content hidden">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold">전자결재함</h2>
-                <button onclick="openApprovalModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ 새 결재 작성 (구매품의서)</button>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <div id="approval-list" class="space-y-3">
-                    <p class="text-center text-gray-400 py-6">상신된 결재 문서가 없습니다.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 회원 관리 -->
-        <section id="members" class="tab-content hidden">
-            <h2 class="text-2xl font-bold mb-4">임직원 및 회원 관리</h2>
-            <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100 border-b">
-                            <th class="p-3">아이디</th>
-                            <th class="p-3">이름</th>
-                            <th class="p-3">직급</th>
-                            <th class="p-3">부서</th>
-                            <th class="p-3">권한</th>
-                        </tr>
-                    </thead>
-                    <tbody id="user-list-tbody">
-                        <tr><td colspan="5" class="p-4 text-center text-gray-400">등록된 회원이 없습니다.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- 캘린더 / 조직도 -->
-        <section id="calendar" class="tab-content hidden">
-            <h2 class="text-2xl font-bold mb-4">일정 캘린더</h2>
-            <div class="bg-white p-6 rounded shadow">사내 공유 일정 캘린더 영역입니다.</div>
-        </section>
-        <section id="org" class="tab-content hidden">
-            <h2 class="text-2xl font-bold mb-4">조직도</h2>
-            <div class="bg-white p-6 rounded shadow">사내 조직도 관리 영역입니다.</div>
-        </section>
-    </main>
-
-    <!-- 로그인 / 회원가입 팝업 -->
-    <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <div class="flex border-b mb-4">
-                <button id="tab-login-btn" onclick="switchAuthMode('login')" class="w-1/2 py-2 font-bold text-blue-600 border-b-2 border-blue-600">로그인</button>
-                <button id="tab-signup-btn" onclick="switchAuthMode('signup')" class="w-1/2 py-2 font-bold text-gray-400">회원가입</button>
+    <!-- AUTH SCREEN -->
+    <div id="authScreen">
+        <div class="auth-card">
+            <h2 style="text-align:center; margin-bottom:5px;"><i class="fa-solid fa-gem" style="color:#0284c7;"></i> HK블루텍</h2>
+            <p style="text-align:center; color:#64748b; font-size:12px; margin-bottom:20px;">사내 실시간 연동 그룹웨어</p>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchAuthTab('login')">로그인</div>
+                <div class="auth-tab" onclick="switchAuthTab('register')">회원가입</div>
             </div>
 
-            <!-- 로그인 -->
-            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">아이디</label>
-                    <input type="text" id="login-id" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>아이디</label>
+                    <input type="text" id="loginId" class="form-control" placeholder="아이디 입력 (최고관리자: song0418_hk)" required>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
-                    <input type="password" id="login-pw" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                <div class="form-group">
+                    <label>비밀번호</label>
+                    <input type="password" id="loginPw" class="form-control" placeholder="비밀번호 입력 (기본: 1234)" required>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">로그인</button>
+                <button type="submit" class="btn btn-primary" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">로그인</button>
             </form>
 
-            <!-- 회원가입 -->
-            <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-3 hidden">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">아이디</label>
-                    <input type="text" id="signup-id" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+            <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>아이디</label>
+                    <input type="text" id="regId" class="form-control" placeholder="사용할 아이디" required>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호 (당사자만 관리)</label>
-                    <input type="password" id="signup-pw" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                <div class="form-group">
+                    <label>비밀번호</label>
+                    <input type="password" id="regPw" class="form-control" placeholder="비밀번호" required>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">이름</label>
-                    <input type="text" id="signup-name" required class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                <div class="form-group">
+                    <label>성명</label>
+                    <input type="text" id="regName" class="form-control" placeholder="성함 입력" required>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">직급</label>
-                        <input type="text" id="signup-position" placeholder="예: 대리" class="w-full border p-2 rounded outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">부서</label>
-                        <input type="text" id="signup-dept" placeholder="예: 구매팀" class="w-full border p-2 rounded outline-none">
-                    </div>
+                <div class="form-group">
+                    <label>직급</label>
+                    <input type="text" id="regPos" class="form-control" placeholder="예: 대리, 과장, 부장" required>
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 text-white py-2 rounded font-bold hover:bg-emerald-700">회원가입</button>
+                <div class="form-group">
+                    <label>부서</label>
+                    <input type="text" id="regDept" class="form-control" placeholder="예: 경영기획팀, 영업팀" required>
+                </div>
+                <button type="submit" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">회원가입 신청</button>
             </form>
         </div>
     </div>
 
-    <!-- 결재 상신 팝업 모달 -->
-    <div id="approval-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-            <h3 class="text-xl font-bold mb-4 pb-2 border-b">📝 구매품의서 결재 상신</h3>
-            <form onsubmit="handleCreateApproval(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">품의 제목</label>
-                    <input type="text" id="app-title" required placeholder="예: 사무용품 및 자재 구매 건" class="w-full border p-2 rounded outline-none">
+    <!-- APP HEADER -->
+    <header class="app-header">
+        <a href="#" class="header-brand" onclick="setActiveNav(this); showSection('sec-home');">
+            <i class="fa-solid fa-gem" style="color:#38bdf8;"></i> HK블루텍 GROUPWARE
+            <span class="sync-badge" id="syncStatusBadge"><i class="fa-solid fa-wifi"></i> 실시간 연동 중</span>
+        </a>
+        <nav class="header-nav">
+            <div class="header-nav-item active" onclick="setActiveNav(this); showSection('sec-home');">홈</div>
+            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-approval'); renderDocList();">전자결재</div>
+            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-schedule'); renderCalendar();">일정 캘린더</div>
+            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-org'); renderOrgAll();">조직도 관리</div>
+            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-members'); renderMemberList();">회원 관리</div>
+        </nav>
+        <div>
+            <span id="currentUserInfo" style="font-weight:700; color:#fff; margin-right:15px;">-</span>
+            <button class="btn" style="padding:4px 8px;" onclick="handleLogout()">로그아웃</button>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="app-sidebar">
+            <button class="btn-new-doc" onclick="openForm()"><i class="fa-solid fa-pen-to-square"></i> 새 결재 작성</button>
+            <ul class="menu-list">
+                <li class="menu-item active">
+                    <a onclick="showSection('sec-approval'); renderDocList();">
+                        <span><i class="fa-solid fa-inbox"></i> 전자결재함</span>
+                        <span class="badge-status badge-pending" id="cntBadge">0</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a onclick="showSection('sec-schedule'); renderCalendar();">
+                        <span><i class="fa-solid fa-calendar-days"></i> 일정 캘린더</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a onclick="showSection('sec-org'); renderOrgAll();">
+                        <span><i class="fa-solid fa-sitemap"></i> 임직원 조직도</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a onclick="showSection('sec-members'); renderMemberList();">
+                        <span><i class="fa-solid fa-users-gear"></i> 회원 및 권한 관리</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="app-main">
+
+            <!-- DASHBOARD -->
+            <section id="sec-home" class="page-section active">
+                <h2 style="margin-bottom:20px;">대시보드</h2>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px;">
+                    <div class="card">
+                        <h3><i class="fa-solid fa-file-invoice"></i> 진행중인 전자결재</h3>
+                        <p style="font-size:28px; font-weight:800; color:var(--warning-color); margin-top:10px;">
+                            <span id="dashCount">0</span> 건
+                        </p>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fa-solid fa-calendar-check"></i> 등록된 사내 일정</h3>
+                        <p style="font-size:28px; font-weight:800; color:var(--primary-color); margin-top:10px;">
+                            <span id="dashSchCount">0</span> 건
+                        </p>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fa-solid fa-users"></i> 등록 임직원 수</h3>
+                        <p style="font-size:28px; font-weight:800; color:var(--success-color); margin-top:10px;">
+                            <span id="dashMemCount">0</span> 명
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">상세 품목 및 내역</label>
-                    <textarea id="app-content" rows="4" required placeholder="품목명, 수량, 금액, 사유 작성" class="w-full border p-2 rounded outline-none"></textarea>
+            </section>
+
+            <!-- APPROVAL LIST SECTION -->
+            <section id="sec-approval" class="page-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2>📑 전자결재 문서 목록</h2>
+                    <button class="btn btn-primary" onclick="openForm()"><i class="fa-solid fa-plus"></i> 기안 작성</button>
                 </div>
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="closeApprovalModal()" class="px-4 py-2 border rounded hover:bg-gray-50">취소</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">상신하기</button>
+                <div class="card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>문서번호</th>
+                                <th>양식구분</th>
+                                <th>기안일자</th>
+                                <th>제목</th>
+                                <th>기안자</th>
+                                <th>결재상태</th>
+                                <th>처리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="realDocTbody"></tbody>
+                    </table>
                 </div>
-            </form>
+            </section>
+
+            <!-- APPROVAL FORM CREATION AND VIEW -->
+            <section id="sec-form" class="page-section">
+                <div style="margin-bottom:20px; display:flex; justify-content:space-between;">
+                    <button class="btn" onclick="showSection('sec-approval'); renderDocList();"><i class="fa-solid fa-arrow-left"></i> 목록으로</button>
+                    <div id="actionArea"></div>
+                </div>
+
+                <div class="document-wrapper">
+                    <div class="doc-header-selector" id="formSelectorArea">
+                        <label><i class="fa-solid fa-file-signature" style="color:var(--primary-color);"></i> 결재 양식 선택:</label>
+                        <select id="formTypeSelect" class="form-control" style="width:250px; font-weight:700;" onchange="changeFormType(this.value)">
+                            <option value="구매 품의서">🛒 구매 품의서</option>
+                            <option value="지출 품의서">💰 지출 품의서</option>
+                            <option value="지출 결의서">💳 지출 결의서</option>
+                            <option value="휴가 신청서">🌴 연차 / 휴가 신청서</option>
+                            <option value="업무 기안서">📝 업무 기안서</option>
+                        </select>
+                    </div>
+
+                    <h1 class="doc-title-main" id="formTitleHeader">HK블루텍 구매품의서</h1>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1.3fr; gap:20px;">
+                        <table class="doc-table">
+                            <tr><th style="width:30%;">문서번호</th><td id="docNum">HK-6584</td></tr>
+                            <tr><th>기안부서</th><td id="docDept">서비스관리팀</td></tr>
+                            <tr><th>기안일자</th><td id="docDate">2026-07-23</td></tr>
+                        </table>
+
+                        <table class="approval-line-table">
+                            <tr>
+                                <th rowspan="3" class="col-head">결<br>재</th>
+                                <th class="col-target">기안자</th>
+                                <th class="col-target">1차 검토자</th>
+                                <th class="col-target">최종 승인자</th>
+                            </tr>
+                            <tr>
+                                <td class="col-target" id="app0Box">-</td>
+                                <td class="col-target" id="app1Box">
+                                    <select id="selectApp1" class="form-control" style="padding:4px; font-size:12px;"></select>
+                                </td>
+                                <td class="col-target" id="app2Box">
+                                    <select id="selectApp2" class="form-control" style="padding:4px; font-size:12px;"></select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="col-target"><span class="badge-status badge-approved">기안 완료</span></td>
+                                <td class="col-target" id="app1Stamp"><span class="badge-status badge-pending">대기</span></td>
+                                <td class="col-target" id="app2Stamp"><span class="badge-status badge-pending">대기</span></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label style="font-weight:700; display:block; margin-bottom:5px;">문서 제목</label>
+                        <input type="text" id="docTitleInput" class="form-control" placeholder="문서 제목을 입력하세요.">
+                    </div>
+
+                    <!-- DYNAMIC FORM CONTAINER -->
+                    <div id="dynamicFormBody"></div>
+                </div>
+            </section>
+
+            <!-- SCHEDULE SECTION -->
+            <section id="sec-schedule" class="page-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h2>📅 일정 관리 캘린더</h2>
+                    <button class="btn btn-primary" onclick="openScheduleModal()"><i class="fa-solid fa-calendar-plus"></i> 새 일정 추가</button>
+                </div>
+                <div class="card">
+                    <div class="calendar-header">
+                        <button class="btn" onclick="prevMonth()"><i class="fa-solid fa-chevron-left"></i> 이전달</button>
+                        <h3 id="calMonthTitle" style="font-size:16px; font-weight:800;">2026년 7월</h3>
+                        <button class="btn" onclick="nextMonth()">다음달 <i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+
+                    <div class="calendar-grid">
+                        <div class="calendar-day-head" style="color:red;">일</div>
+                        <div class="calendar-day-head">월</div>
+                        <div class="calendar-day-head">화</div>
+                        <div class="calendar-day-head">수</div>
+                        <div class="calendar-day-head">목</div>
+                        <div class="calendar-day-head">금</div>
+                        <div class="calendar-day-head" style="color:blue;">토</div>
+                    </div>
+                    <div class="calendar-grid" id="calCellsGrid"></div>
+                </div>
+            </section>
+
+            <!-- ORG SECTION -->
+            <section id="sec-org" class="page-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2>🏢 임직원 및 시각화 조직도</h2>
+                    <button class="btn btn-primary" onclick="openUserModal()"><i class="fa-solid fa-user-plus"></i> 사원 직접 추가</button>
+                </div>
+
+                <div class="card" style="background:#f8fafc; border: 1px dashed var(--primary-color);">
+                    <h3 style="margin-bottom:10px;"><i class="fa-solid fa-diagram-project"></i> 조직 구조도</h3>
+                    <div class="org-tree" id="visualOrgContainer"></div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom:10px;"><i class="fa-solid fa-list"></i> 임직원 명부</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>사원ID</th>
+                                <th>성명</th>
+                                <th>직급</th>
+                                <th>부서</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orgTbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- MEMBER MANAGEMENT SECTION -->
+            <section id="sec-members" class="page-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <div>
+                        <h2>👥 회원 가입 목록 및 최고 관리자 권한 제어</h2>
+                        <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+                            최고 관리자 계정: <strong style="color:var(--primary-color);">song0418_hk</strong>
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openUserModal()"><i class="fa-solid fa-user-plus"></i> 신규 회원 등록</button>
+                </div>
+                <div class="card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>아이디</th>
+                                <th>비밀번호</th>
+                                <th>성명</th>
+                                <th>직급</th>
+                                <th>부서</th>
+                                <th>권한 관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberTbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div id="schModal" class="modal-overlay">
+        <div class="modal-body">
+            <h3 style="margin-bottom:15px;">새 일정 등록</h3>
+            <div class="form-group"><label>일정 제목</label><input type="text" id="schTitle" class="form-control" placeholder="예: 주간 회의"></div>
+            <div class="form-group"><label>날짜</label><input type="date" id="schDate" class="form-control"></div>
+            <div class="form-group"><label>시간</label><input type="time" id="schTime" class="form-control" value="10:00"></div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+                <button class="btn" onclick="closeModal('schModal')">취소</button>
+                <button class="btn btn-primary" onclick="saveSchedule()">저장하기</button>
+            </div>
         </div>
     </div>
 
-    <!-- 스크립트 (실시간 연동 로직 포함) -->
+    <div id="userModal" class="modal-overlay">
+        <div class="modal-body">
+            <h3 style="margin-bottom:15px;">임직원 정보 등록/수정</h3>
+            <div class="form-group"><label>아이디</label><input type="text" id="userIdInput" class="form-control"></div>
+            <div class="form-group"><label>비밀번호</label><input type="password" id="userPwInput" class="form-control" value="1234"></div>
+            <div class="form-group"><label>성명</label><input type="text" id="userName" class="form-control"></div>
+            <div class="form-group"><label>직급</label><input type="text" id="userPos" class="form-control"></div>
+            <div class="form-group"><label>부서</label><input type="text" id="userDept" class="form-control"></div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+                <button class="btn" onclick="closeModal('userModal')">취소</button>
+                <button class="btn btn-primary" onclick="saveUser()">저장하기</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 1. 전역 변수 선언 (에러 발생 사전 방지)
-        let globalUsers = [];
-        let globalApprovals = [];
-        let currentUser = null;
-
-        // 2. Firebase 설정 (databaseURL 정확히 연결)
-        const firebaseConfig = {
-            apiKey: "AIzaSy...",
-            authDomain: "hkbluetec-groupware.firebaseapp.com",
-            databaseURL: "https://hkbluetec-groupware-default-rtdb.firebaseio.com",
-            projectId: "hkbluetec-groupware",
-            storageBucket: "hkbluetec-groupware.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "YOUR_APP_ID"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        // FIREBASE INITIALIZATION
+        const firebaseConfig = { databaseURL: "https://hkbluetec-default-rtdb.asia-southeast1.firebasedatabase.app" };
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 3. 실시간 DB 감시 (.on) -> 데이터 전송 시 모든 PC 자동 갱신
-        db.ref('users').on('value', (snapshot) => {
-            const data = snapshot.val();
-            globalUsers = data ? Object.values(data) : [];
-            renderUserList();
-            updateDashboard();
-        });
+        // DEFAULT INITIAL DATA
+        const DEFAULT_USERS = {
+            'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
+            'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
+        };
 
-        db.ref('approvals').on('value', (snapshot) => {
-            const data = snapshot.val();
-            globalApprovals = data ? Object.values(data) : [];
-            renderApprovalList();
-            updateDashboard();
-        });
+        let currentUser = null;
+        let globalUsers = DEFAULT_USERS;
+        let globalDocs = {};
+        let globalSchedules = {};
+        let currentCalDate = new Date(2026, 6, 1);
 
-        // 4. 회원가입 / 로그인
-        function handleSignup(e) {
-            e.preventDefault();
-            const id = document.getElementById('signup-id').value.trim();
-            const pw = document.getElementById('signup-pw').value.trim();
-            const name = document.getElementById('signup-name').value.trim();
-            const position = document.getElementById('signup-position').value.trim() || '사원';
-            const dept = document.getElementById('signup-dept').value.trim() || '미정';
-
-            if (globalUsers.some(u => u.id === id)) {
-                alert('이미 등록된 아이디입니다.');
-                return;
+        // INITIALIZE SYSTEM & REALTIME LISTENERS
+        function initRealtimeSync() {
+            // Restore Session
+            const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
+            if (savedSession) {
+                try {
+                    currentUser = JSON.parse(savedSession);
+                    document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
+                    document.getElementById('authScreen').style.display = 'none';
+                } catch(e) { sessionStorage.removeItem('HK_CURRENT_USER'); }
             }
 
-            const newUser = {
-                id: id,
-                pw: pw,
-                name: name,
-                position: position,
-                dept: dept,
-                role: (id === 'song0418_hk') ? '최고관리자' : '일반',
-                createdAt: new Date().toISOString()
-            };
+            const localUserBackup = localStorage.getItem('HK_USERS_BACKUP');
+            if(localUserBackup) { globalUsers = Object.assign({}, DEFAULT_USERS, JSON.parse(localUserBackup)); }
 
-            // Firebase 서버 저장
-            db.ref('users/' + id).set(newUser, (err) => {
-                if (err) {
-                    alert('가입 실패: ' + err.message);
+            // 1. 실시간 회원가입/유저 동기화
+            db.ref('groupware/users').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    globalUsers = data;
+                    localStorage.setItem('HK_USERS_BACKUP', JSON.stringify(globalUsers));
                 } else {
-                    alert('회원가입이 완료되었습니다!');
-                    switchAuthMode('login');
-                    document.getElementById('signup-form').reset();
+                    db.ref('groupware/users').set(DEFAULT_USERS);
                 }
+                renderMemberList(); renderOrgAll(); updateBadges(); populateUserSelects();
             });
+
+            // 2. 실시간 결재 문서 동기화
+            db.ref('groupware/docs').on('value', (snapshot) => {
+                globalDocs = snapshot.val() || {};
+                renderDocList(); updateBadges();
+            });
+
+            // 3. 실시간 일정 동기화
+            db.ref('groupware/schedules').on('value', (snapshot) => {
+                globalSchedules = snapshot.val() || {};
+                renderCalendar(); updateBadges();
+            });
+        }
+
+        // AUTHENTICATION LOGIC
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            if(tab === 'login') {
+                document.querySelectorAll('.auth-tab')[0].classList.add('active');
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
+            } else {
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'block';
+            }
         }
 
         function handleLogin(e) {
             e.preventDefault();
-            const id = document.getElementById('login-id').value.trim();
-            const pw = document.getElementById('login-pw').value.trim();
+            const id = document.getElementById('loginId').value.trim().toLowerCase();
+            const pw = document.getElementById('loginPw').value.trim();
 
-            // 최고관리자 고정 계정
-            if (id === 'song0418_hk' && pw === '1234') {
-                currentUser = { id: 'song0418_hk', name: '최고관리자', role: '최고관리자', dept: '관리부' };
-                onLoginSuccess();
-                return;
-            }
+            const user = globalUsers[id];
+            if(!user || user.pw !== pw) return alert('아이디 또는 비밀번호가 올바르지 않습니다.');
 
-            const user = globalUsers.find(u => u.id === id && u.pw === pw);
-            if (user) {
-                currentUser = user;
-                onLoginSuccess();
-            } else {
-                alert('아이디 또는 비밀번호가 틀렸습니다.');
-            }
+            currentUser = user;
+            sessionStorage.setItem('HK_CURRENT_USER', JSON.stringify(currentUser));
+            document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
+            document.getElementById('authScreen').style.display = 'none';
+
+            showSection('sec-approval');
+            renderDocList();
         }
 
-        function onLoginSuccess() {
-            document.getElementById('auth-modal').classList.add('hidden');
-            document.getElementById('logout-btn').classList.remove('hidden');
-            alert(`${currentUser.name}님 환영합니다.`);
+        function handleRegister(e) {
+            e.preventDefault();
+            const id = document.getElementById('regId').value.trim().toLowerCase();
+            const pw = document.getElementById('regPw').value.trim();
+            const name = document.getElementById('regName').value.trim();
+            const pos = document.getElementById('regPos').value.trim();
+            const dept = document.getElementById('regDept').value.trim();
+
+            if(globalUsers[id]) return alert('이미 존재하는 아이디입니다.');
+
+            const newUser = { id, pw, name, pos, dept, isOwner: false };
+            globalUsers[id] = newUser;
+            localStorage.setItem('HK_USERS_BACKUP', JSON.stringify(globalUsers));
+            
+            db.ref(`groupware/users/${id}`).set(newUser);
+
+            alert('회원가입이 완료되었습니다! 조직도와 임직원 명부에 바로 등록되었습니다.');
+            document.getElementById('registerForm').reset();
+            switchAuthTab('login');
+            document.getElementById('loginId').value = id;
         }
 
         function handleLogout() {
-            currentUser = null;
-            document.getElementById('auth-modal').classList.remove('hidden');
-            document.getElementById('logout-btn').classList.add('hidden');
+            sessionStorage.removeItem('HK_CURRENT_USER');
+            location.reload();
         }
 
-        // 5. 전자결재 상신
-        function openApprovalModal() {
-            if (!currentUser) { alert('로그인이 필요합니다.'); return; }
-            document.getElementById('approval-modal').classList.remove('hidden');
+        // NAVIGATION
+        function showSection(secId) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(secId).classList.add('active');
         }
 
-        function closeApprovalModal() {
-            document.getElementById('approval-modal').classList.add('hidden');
+        function setActiveNav(element) {
+            document.querySelectorAll('.header-nav-item').forEach(i => i.classList.remove('active'));
+            if(element) element.classList.add('active');
         }
 
-        function handleCreateApproval(e) {
-            e.preventDefault();
-            const title = document.getElementById('app-title').value.trim();
-            const content = document.getElementById('app-content').value.trim();
+        // DYNAMIC FORM CREATOR (항목 추가/삭제 가능 품의서)
+        function changeFormType(val) {
+            document.getElementById('formTitleHeader').innerText = `HK블루텍 ${val}`;
+            const body = document.getElementById('dynamicFormBody');
 
-            const appKey = db.ref('approvals').push().key;
-            const newApproval = {
-                id: appKey,
-                title: title,
-                content: content,
-                author: currentUser.name,
-                dept: currentUser.dept || '기타',
-                status: '대기중',
-                date: new Date().toLocaleDateString('ko-KR')
-            };
+            if (val === '구매 품의서' || val === '지출 품의서') {
+                body.innerHTML = `
+                    <table class="doc-table">
+                        <tr><th style="width:20%;">품의 목적</th><td colspan="3"><input type="text" class="form-control" value="사내 업무용 비품 및 소모품 구매 건"></td></tr>
+                        <tr><th style="width:20%;">납품 및 진행처</th><td><input type="text" class="form-control" value="HK블루텍 본사"></td><th style="width:20%;">지급 희망일</th><td><input type="date" class="form-control"></td></tr>
+                    </table>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0 8px;">
+                        <h4 style="margin:0;">🛒 구매/지출 내역 세부 항목</h4>
+                        <button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="addFormRow()"><i class="fa-solid fa-plus"></i> 항목 추가</button>
+                    </div>
+                    <table class="doc-table" id="itemTable">
+                        <thead>
+                            <tr>
+                                <th>품목명</th>
+                                <th style="width:15%;">수량</th>
+                                <th style="width:20%;">단가(원)</th>
+                                <th style="width:22%;">금액(원)</th>
+                                <th style="width:10%;">삭제</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemTbody">
+                            <tr>
+                                <td><input type="text" class="form-control" value="사내 업무용 고성능 모니터"></td>
+                                <td><input type="number" class="form-control cal-qty" value="2" oninput="calculateTotal()"></td>
+                                <td><input type="number" class="form-control cal-price" value="350000" oninput="calculateTotal()"></td>
+                                <td><input type="text" class="form-control cal-sum" value="700,000" readonly></td>
+                                <td><button class="btn btn-danger" style="padding:2px 6px;" onclick="removeFormRow(this)"><i class="fa-solid fa-xmark"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="doc-table">
+                        <tr><th style="width:50%;">공급가액 총합</th><td id="subTotal">700,000 원</td></tr>
+                        <tr><th>부가세 (VAT 10%)</th><td id="vatTotal">70,000 원</td></tr>
+                        <tr><th style="background:#e2e8f0;">최종 합계 금액</th><td id="grandTotal" style="font-weight:800; color:var(--primary-color); font-size:16px;">770,000 원</td></tr>
+                    </table>`;
+            } else if (val === '지출 결의서') {
+                body.innerHTML = `
+                    <table class="doc-table">
+                        <tr><th style="width:20%;">지출 구분</th><td>
+                            <select class="form-control"><option>법인카드</option><option>계좌이체</option><option>현금지출</option></select>
+                        </td><th style="width:20%;">지출 가망일</th><td><input type="date" class="form-control"></td></tr>
+                        <tr><th>입금 계좌정보</th><td colspan="3"><input type="text" class="form-control" placeholder="은행명 / 계좌번호 / 예금주명"></td></tr>
+                    </table>
+                    <h4 style="margin:15px 0 8px;">💳 지출 상세 청구 내역</h4>
+                    <table class="doc-table">
+                        <tr><th>지출 적요 항목</th><th style="width:25%;">금액</th></tr>
+                        <tr><td><input type="text" class="form-control" value="클라우드 서버 사용료 및 유지보수 비용"></td><td><input type="number" class="form-control cal-price" value="150000" oninput="calculateExpTotal()"></td></tr>
+                        <tr><th>합계 금액</th><td id="expTotal" style="font-weight:800; color:var(--primary-color);">150,000 원</td></tr>
+                    </table>`;
+            } else if (val === '휴가 신청서') {
+                body.innerHTML = `
+                    <table class="doc-table">
+                        <tr><th style="width:20%;">휴가 종류</th><td>
+                            <select class="form-control" onchange="updateVacDays(this.value)">
+                                <option value="1">연차 (1일)</option>
+                                <option value="0.5">오전 반차 (0.5일)</option>
+                                <option value="0.5">오후 반차 (0.5일)</option>
+                                <option value="0">경조휴가</option>
+                                <option value="0">병가</option>
+                            </select>
+                        </td><th style="width:20%;">차감 일수</th><td id="vacDays">1 일</td></tr>
+                        <tr><th>휴가 기간</th><td colspan="3"><input type="date" class="form-control" style="width:45%; display:inline;"> ~ <input type="date" class="form-control" style="width:45%; display:inline;"></td></tr>
+                        <tr><th>업무 대직자</th><td><input type="text" class="form-control" placeholder="성명 및 직급"></td><th>비상 연락처</th><td><input type="text" class="form-control" placeholder="010-0000-0000"></td></tr>
+                        <tr><th>사유</th><td colspan="3"><textarea class="form-control" rows="3" placeholder="휴가 사유를 적어주세요."></textarea></td></tr>
+                    </table>`;
+            } else {
+                body.innerHTML = `
+                    <table class="doc-table">
+                        <tr><th style="width:20%;">기안 목적</th><td colspan="3"><input type="text" class="form-control" placeholder="업무 기안의 핵심 목적"></td></tr>
+                        <tr><th>상세 기안 내용</th><td colspan="3"><textarea class="form-control" rows="8" placeholder="상세 기안 내용 작성"></textarea></td></tr>
+                    </table>`;
+            }
+        }
 
-            db.ref('approvals/' + appKey).set(newApproval, (err) => {
-                if (!err) {
-                    alert('구매품의서가 결재 상신되었습니다.');
-                    closeApprovalModal();
-                    document.getElementById('app-title').value = '';
-                    document.getElementById('app-content').value = '';
-                }
+        // 품의서 항목 추가 및 삭제 로직
+        function addFormRow() {
+            const tbody = document.getElementById('itemTbody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="form-control" placeholder="품목명 입력"></td>
+                <td><input type="number" class="form-control cal-qty" value="1" oninput="calculateTotal()"></td>
+                <td><input type="number" class="form-control cal-price" value="0" oninput="calculateTotal()"></td>
+                <td><input type="text" class="form-control cal-sum" value="0" readonly></td>
+                <td><button class="btn btn-danger" style="padding:2px 6px;" onclick="removeFormRow(this)"><i class="fa-solid fa-xmark"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+            calculateTotal();
+        }
+
+        function removeFormRow(btn) {
+            const tbody = document.getElementById('itemTbody');
+            if (tbody.children.length <= 1) return alert('최소 1개의 항목은 존재해야 합니다.');
+            btn.closest('tr').remove();
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let grandSub = 0;
+            const rows = document.querySelectorAll('#itemTbody tr');
+
+            rows.forEach(r => {
+                const qty = parseFloat(r.querySelector('.cal-qty').value) || 0;
+                const price = parseFloat(r.querySelector('.cal-price').value) || 0;
+                const sum = qty * price;
+                r.querySelector('.cal-sum').value = sum.toLocaleString();
+                grandSub += sum;
+            });
+
+            const vat = grandSub * 0.1;
+            const grand = grandSub + vat;
+
+            document.getElementById('subTotal').innerText = grandSub.toLocaleString() + ' 원';
+            document.getElementById('vatTotal').innerText = vat.toLocaleString() + ' 원';
+            document.getElementById('grandTotal').innerText = grand.toLocaleString() + ' 원';
+        }
+
+        function calculateExpTotal() {
+            const price = parseFloat(document.querySelector('.cal-price').value) || 0;
+            document.getElementById('expTotal').innerText = price.toLocaleString() + ' 원';
+        }
+
+        function updateVacDays(val) {
+            document.getElementById('vacDays').innerText = val + ' 일';
+        }
+
+        // APPROVAL REALTIME LIST & SUBMIT
+        function renderDocList() {
+            const tbody = document.getElementById('realDocTbody');
+            tbody.innerHTML = '';
+            const docsList = Object.values(globalDocs);
+
+            if (docsList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">상신된 결재 문서가 없습니다.</td></tr>`;
+                return;
+            }
+
+            docsList.reverse().forEach(d => {
+                const tr = document.createElement('tr');
+                let badgeHtml = '<span class="badge-status badge-pending">대기중</span>';
+                if (d.status === 'approved') badgeHtml = '<span class="badge-status badge-approved">최종 승인</span>';
+
+                tr.innerHTML = `
+                    <td><strong>${d.id}</strong></td>
+                    <td><span class="badge-status" style="background:#f1f5f9;">${d.formType}</span></td>
+                    <td>${d.date}</td>
+                    <td>${d.title}</td>
+                    <td>${d.author}</td>
+                    <td>${badgeHtml}</td>
+                    <td><button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="viewDetail('${d.id}')">보기</button></td>
+                `;
+                tbody.appendChild(tr);
             });
         }
 
-        // 6. UI 화면 갱신
-        function switchAuthMode(mode) {
-            if (mode === 'login') {
-                document.getElementById('login-form').classList.remove('hidden');
-                document.getElementById('signup-form').classList.add('hidden');
-                document.getElementById('tab-login-btn').className = "w-1/2 py-2 font-bold text-blue-600 border-b-2 border-blue-600";
-                document.getElementById('tab-signup-btn').className = "w-1/2 py-2 font-bold text-gray-400";
+        function openForm() {
+            showSection('sec-form');
+            const today = new Date().toISOString().substring(0, 10);
+            const newId = 'HK-' + Math.floor(Math.random() * 8999 + 1000);
+            document.getElementById('docNum').innerText = newId;
+            document.getElementById('docDept').innerText = currentUser ? currentUser.dept : '서비스관리팀';
+            document.getElementById('docDate').innerText = today;
+            document.getElementById('app0Box').innerText = currentUser ? `${currentUser.name} ${currentUser.pos}` : '작성자';
+
+            populateUserSelects();
+            changeFormType(document.getElementById('formTypeSelect').value);
+            document.getElementById('actionArea').innerHTML = `<button class="btn btn-primary" onclick="submitNewDoc('${newId}')"><i class="fa-solid fa-paper-plane"></i> 즉시 결재 상신</button>`;
+        }
+
+        function populateUserSelects() {
+            const sel1 = document.getElementById('selectApp1');
+            const sel2 = document.getElementById('selectApp2');
+            if(!sel1 || !sel2) return;
+            sel1.innerHTML = ''; sel2.innerHTML = '';
+
+            Object.values(globalUsers).forEach(u => {
+                const opt = `${u.name} ${u.pos}`;
+                sel1.appendChild(new Option(opt, opt));
+                sel2.appendChild(new Option(opt, opt));
+            });
+        }
+
+        function submitNewDoc(docId) {
+            const title = document.getElementById('docTitleInput').value;
+            if(!title) return alert('문서 제목을 입력해 주세요!');
+
+            const docData = {
+                id: docId,
+                formType: document.getElementById('formTypeSelect').value,
+                title: title,
+                author: currentUser ? `${currentUser.name} ${currentUser.pos}` : '기안자',
+                dept: currentUser ? currentUser.dept : '서비스관리팀',
+                date: document.getElementById('docDate').innerText,
+                status: 'pending'
+            };
+
+            globalDocs[docId] = docData;
+            db.ref(`groupware/docs/${docId}`).set(docData);
+            alert('전자결재가 상신되었습니다! 모든 임직원 화면에 실시간 수신됩니다.');
+            showSection('sec-approval');
+        }
+
+        function viewDetail(docId) {
+            showSection('sec-form');
+            const d = globalDocs[docId];
+            document.getElementById('docNum').innerText = d.id;
+            document.getElementById('docDept').innerText = d.dept;
+            document.getElementById('docDate').innerText = d.date;
+            document.getElementById('docTitleInput').value = d.title;
+            document.getElementById('app0Box').innerText = d.author;
+
+            document.getElementById('actionArea').innerHTML = `<button class="btn btn-success" onclick="approveDoc('${d.id}')">승인 처리</button>`;
+        }
+
+        function approveDoc(docId) {
+            db.ref(`groupware/docs/${docId}`).update({ status: 'approved' });
+            alert('최종 승인 완료되었습니다.');
+            showSection('sec-approval');
+        }
+
+        // ORG CHART & MEMBERS
+        function renderOrgAll() {
+            const container = document.getElementById('visualOrgContainer');
+            const users = Object.values(globalUsers);
+            const ceo = users.find(u => u.pos.includes('대표')) || users[0];
+
+            let html = `<div class="org-node"><div style="font-weight:800; color:var(--primary-color);">${ceo ? ceo.pos : '대표이사'}</div><div>${ceo ? ceo.name : '김대표'}</div></div><div class="org-branches">`;
+            const deptMap = {};
+            users.forEach(u => {
+                if(ceo && u.id === ceo.id) return;
+                if(!deptMap[u.dept]) deptMap[u.dept] = [];
+                deptMap[u.dept].push(u);
+            });
+
+            Object.keys(deptMap).forEach(dept => {
+                html += `<div class="org-branch"><div class="org-node" style="border-color:#38bdf8; background:#f0f9ff;"><div style="color:#0284c7; font-weight:800;">${dept}</div></div>`;
+                deptMap[dept].forEach(u => {
+                    html += `<div class="org-node" style="border-color:#cbd5e1; margin-top:5px; padding:4px 8px; min-width:100px;"><div style="font-size:11px; color:#64748b;">${u.pos}</div><div>${u.name}</div></div>`;
+                });
+                html += `</div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+
+            const tbody = document.getElementById('orgTbody');
+            tbody.innerHTML = '';
+            users.forEach(u => {
+                tbody.innerHTML += `<tr><td>${u.id}</td><td><strong>${u.name}</strong></td><td>${u.pos}</td><td>${u.dept}</td><td><button class="btn" style="padding:2px 6px;" onclick="openUserModal('${u.id}')">수정</button></td></tr>`;
+            });
+        }
+
+        function renderMemberList() {
+            const tbody = document.getElementById('memberTbody');
+            tbody.innerHTML = '';
+            Object.values(globalUsers).forEach(u => {
+                const isOwner = u.id === 'song0418_hk' || u.isOwner;
+                tbody.innerHTML += `<tr><td><strong>${u.id}</strong> ${isOwner ? '<span class="badge-status badge-admin">최고관리자</span>' : ''}</td><td>••••••••</td><td>${u.name}</td><td>${u.pos}</td><td>${u.dept}</td><td><button class="btn" style="padding:2px 6px;" onclick="openUserModal('${u.id}')">수정</button></td></tr>`;
+            });
+        }
+
+        function openUserModal(userId = null) {
+            const idInput = document.getElementById('userIdInput');
+            if(userId && globalUsers[userId]) {
+                const u = globalUsers[userId];
+                idInput.value = u.id; idInput.readOnly = true;
+                document.getElementById('userPwInput').value = u.pw;
+                document.getElementById('userName').value = u.name;
+                document.getElementById('userPos').value = u.pos;
+                document.getElementById('userDept').value = u.dept;
             } else {
-                document.getElementById('login-form').classList.add('hidden');
-                document.getElementById('signup-form').classList.remove('hidden');
-                document.getElementById('tab-login-btn').className = "w-1/2 py-2 font-bold text-gray-400";
-                document.getElementById('tab-signup-btn').className = "w-1/2 py-2 font-bold text-emerald-600 border-b-2 border-emerald-600";
+                idInput.value = ''; idInput.readOnly = false;
+                document.getElementById('userPwInput').value = '1234';
+                document.getElementById('userName').value = '';
+                document.getElementById('userPos').value = '';
+                document.getElementById('userDept').value = '';
+            }
+            document.getElementById('userModal').style.display = 'flex';
+        }
+
+        function saveUser() {
+            const id = document.getElementById('userIdInput').value.trim().toLowerCase();
+            const pw = document.getElementById('userPwInput').value.trim();
+            const name = document.getElementById('userName').value.trim();
+            const pos = document.getElementById('userPos').value.trim();
+            const dept = document.getElementById('userDept').value.trim();
+
+            if(!id || !name) return alert('필수 입력 항목이 누락되었습니다.');
+
+            const u = { id, pw, name, pos, dept, isOwner: id === 'song0418_hk' };
+            db.ref(`groupware/users/${id}`).set(u);
+
+            alert('임직원 정보가 즉시 업데이트되었습니다.');
+            closeModal('userModal');
+        }
+
+        // CALENDAR
+        function renderCalendar() {
+            const grid = document.getElementById('calCellsGrid');
+            grid.innerHTML = '';
+            for(let i = 0; i < 35; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                cell.innerHTML = `<div class="calendar-date-num">${(i % 31) + 1}</div>`;
+                grid.appendChild(cell);
             }
         }
 
-        function renderUserList() {
-            const tbody = document.getElementById('user-list-tbody');
-            if (globalUsers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">등록된 회원이 없습니다.</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = globalUsers.map(u => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3 font-medium">${u.id}</td>
-                    <td class="p-3 font-bold">${u.name}</td>
-                    <td class="p-3">${u.position || '-'}</td>
-                    <td class="p-3">${u.dept || '-'}</td>
-                    <td class="p-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${u.role || '일반'}</span></td>
-                </tr>
-            `).join('');
+        function openScheduleModal() { document.getElementById('schModal').style.display = 'flex'; }
+        function saveSchedule() {
+            const title = document.getElementById('schTitle').value;
+            const date = document.getElementById('schDate').value;
+            const time = document.getElementById('schTime').value;
+            const id = 'SCH-' + Date.now();
+
+            const sch = { id, title, date, time };
+            db.ref(`groupware/schedules/${id}`).set(sch);
+            alert('일정이 등록되었습니다.');
+            closeModal('schModal');
         }
 
-        function renderApprovalList() {
-            const container = document.getElementById('approval-list');
-            if (globalApprovals.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-400 py-6">상신된 결재 문서가 없습니다.</p>`;
-                return;
-            }
-            container.innerHTML = globalApprovals.map(a => `
-                <div class="p-4 border rounded flex justify-between items-center bg-gray-50">
-                    <div>
-                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded font-bold">구매품의서</span>
-                        <h4 class="font-bold text-lg inline-block ml-2">${a.title}</h4>
-                        <p class="text-xs text-gray-500 mt-1">기안자: ${a.author} (${a.dept}) | 기안일: ${a.date}</p>
-                        <p class="text-sm text-gray-700 mt-2 bg-white p-2 rounded border">${a.content}</p>
-                    </div>
-                    <span class="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full font-bold">${a.status || '대기중'}</span>
-                </div>
-            `).join('');
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function updateBadges() {
+            document.getElementById('cntBadge').innerText = Object.keys(globalDocs).length;
+            document.getElementById('dashCount').innerText = Object.keys(globalDocs).length;
+            document.getElementById('dashSchCount').innerText = Object.keys(globalSchedules).length;
+            document.getElementById('dashMemCount').innerText = Object.keys(globalUsers).length;
         }
 
-        function updateDashboard() {
-            document.getElementById('dash-user-count').innerText = `${globalUsers.length} 명`;
-            document.getElementById('dash-approval-count').innerText = `${globalApprovals.length} 건`;
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
-        }
+        window.onload = initRealtimeSync;
     </script>
 </body>
+    <!-- Firebase 실시간 연동 코드 -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgEmCFvCI7Ou8jPkfngObTLJGaYPQbz18",
+    authDomain: "hkbluetec.firebaseapp.com",
+    projectId: "hkbluetec",
+    storageBucket: "hkbluetec.firebasestorage.app",
+    messagingSenderId: "997191589965",
+    appId: "1:997191589965:web:e29d58d70c8e8d3d24fc04"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+</script>
 </html>
