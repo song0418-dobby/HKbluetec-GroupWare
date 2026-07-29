@@ -609,7 +609,7 @@
 
             db.ref('users/' + id).set(newUser, (error) => {
                 if (error) {
-                    alert("저장 실패: Firebase 콘솔 규칙(Rules)을 확인하세요.");
+                    alert("회원가입 실패: " + error.message);
                 } else {
                     alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
                     document.getElementById('registerForm').reset();
@@ -794,6 +794,9 @@
 
         function openForm() {
             showSection('sec-form');
+            document.getElementById('formSelectorArea').style.display = 'flex';
+            document.getElementById('docTitleInput').readOnly = false;
+            
             const today = new Date().toISOString().substring(0, 10);
             const newId = 'HK-' + Math.floor(Math.random() * 8999 + 1000);
             document.getElementById('docNum').innerText = newId;
@@ -822,10 +825,16 @@
             });
         }
 
-        // 결재 상신 실시간 저장
+        // 결재 상신 실시간 저장 완전 수정 보완
         function submitNewDoc(docId) {
             const title = document.getElementById('docTitleInput').value.trim();
-            if(!title) return alert('문서 제목을 입력해 주세요!');
+            if(!title) {
+                alert('문서 제목을 입력해 주세요!');
+                return;
+            }
+
+            const app1 = document.getElementById('selectApp1') ? document.getElementById('selectApp1').value : '';
+            const app2 = document.getElementById('selectApp2') ? document.getElementById('selectApp2').value : '';
 
             const docData = {
                 id: docId,
@@ -834,28 +843,34 @@
                 author: currentUser ? `${currentUser.name} ${currentUser.pos}` : '기안자',
                 dept: currentUser ? currentUser.dept : '서비스관리팀',
                 date: document.getElementById('docDate').innerText,
-                status: 'pending'
+                app1: app1,
+                app2: app2,
+                status: 'pending',
+                createdAt: Date.now()
             };
 
-            db.ref('docs/' + docId).set(docData, (error) => {
-                if(error) {
-                    alert("상신 실패: DB 접근 권한을 확인해 주세요.");
-                } else {
-                    alert('전자결재가 전사 실시간으로 상신되었습니다!');
+            // Firebase 실시간 DB에 상신 문서 저장
+            db.ref('docs/' + docId).set(docData)
+                .then(() => {
+                    alert('전자결재가 전사 실시간으로 성공적으로 상신되었습니다!');
                     switchNavSection('sec-approval');
-                }
-            });
+                })
+                .catch((error) => {
+                    alert("상신 실패 (오류 내용): " + error.message + "\n\nFirebase Console의 Realtime Database 규칙(.read, .write)이 true로 열려있는지 확인해 주세요.");
+                });
         }
 
         function viewDetail(docId) {
             showSection('sec-form');
             const d = globalDocs[docId];
             if(!d) return;
-            
+
+            document.getElementById('formSelectorArea').style.display = 'none';
+            document.getElementById('docTitleInput').value = d.title;
+            document.getElementById('docTitleInput').readOnly = true;
             document.getElementById('docNum').innerText = d.id;
             document.getElementById('docDept').innerText = d.dept;
             document.getElementById('docDate').innerText = d.date;
-            document.getElementById('docTitleInput').value = d.title;
             document.getElementById('app0Box').innerText = d.author;
 
             if (d.status === 'approved') {
@@ -870,12 +885,14 @@
         }
 
         function approveDoc(docId) {
-            db.ref('docs/' + docId).update({ status: 'approved' }, (error) => {
-                if(!error) {
-                    alert('승인 처리되었습니다!');
+            db.ref('docs/' + docId).update({ status: 'approved' })
+                .then(() => {
+                    alert('성공적으로 결재 승인 처리되었습니다!');
                     switchNavSection('sec-approval');
-                }
-            });
+                })
+                .catch((err) => {
+                    alert("승인 오류: " + err.message);
+                });
         }
 
         function renderOrgAll() {
@@ -955,14 +972,14 @@
 
             const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
 
-            db.ref('users/' + id).set(u, (error) => {
-                if(error) {
-                    alert("저장 실패: DB 권한을 확인하세요.");
-                } else {
+            db.ref('users/' + id).set(u)
+                .then(() => {
                     alert('임직원 정보가 실시간 반영되었습니다.');
                     closeModal('userModal');
-                }
-            });
+                })
+                .catch((error) => {
+                    alert("회원 저장 실패: " + error.message);
+                });
         }
 
         function renderCalendar() {
@@ -1035,14 +1052,14 @@
             const id = 'SCH-' + Date.now();
             const sch = { id, title, date, time };
 
-            db.ref('schedules/' + id).set(sch, (error) => {
-                if(error) {
-                    alert("일정 저장 실패: DB 접근 권한을 확인하세요.");
-                } else {
+            db.ref('schedules/' + id).set(sch)
+                .then(() => {
                     alert('일정이 등록되어 전사에 실시간 공유되었습니다.');
                     closeModal('schModal');
-                }
-            });
+                })
+                .catch((error) => {
+                    alert("일정 저장 실패: " + error.message);
+                });
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
