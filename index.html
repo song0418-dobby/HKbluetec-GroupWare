@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK (Compat v9) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -36,7 +36,7 @@
         /* Auth Screen */
         #authScreen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 23, 42, 0.88); display: flex; align-items: center; justify-content: center; z-index: 9999;
+            background: rgba(15, 23, 42, 0.92); display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
         .auth-card { background: #fff; width: 420px; padding: 32px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); }
         .auth-tabs { display: flex; border-bottom: 2px solid var(--border-light); margin-bottom: 20px; }
@@ -77,11 +77,12 @@
         .page-section { display: none; }
         .page-section.active { display: block; }
 
-        /* Basic UI components */
+        /* UI components */
         .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid var(--border-color); background-color: #fff; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); }
         .btn-primary:hover { background-color: var(--primary-hover); }
         .btn-danger { background-color: var(--danger-color); color: #fff; border-color: var(--danger-color); }
+        .btn-danger:hover { background-color: #b91c1c; }
         .btn-success { background-color: var(--success-color); color: #fff; border-color: var(--success-color); }
 
         .card { background: #fff; border-radius: 8px; padding: 20px; border: 1px solid var(--border-light); margin-bottom: 20px; }
@@ -121,10 +122,7 @@
         /* Org Tree */
         .org-tree { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px 0; }
         .org-node { background: #fff; border: 2px solid var(--primary-color); border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 140px; }
-        .org-branches { display: flex; gap: 30px; position: relative; }
-        .org-branches::before { content: ''; position: absolute; top: -10px; left: 10%; right: 10%; height: 2px; background: var(--border-color); }
-        .org-branch { display: flex; flex-direction: column; align-items: center; position: relative; }
-        .org-branch::before { content: ''; position: absolute; top: -10px; width: 2px; height: 10px; background: var(--border-color); }
+        .org-branches { display: flex; gap: 30px; position: relative; flex-wrap: wrap; justify-content: center; }
 
         /* Modals */
         .modal-overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9000; }
@@ -140,7 +138,7 @@
     <div id="authScreen">
         <div class="auth-card">
             <h2 style="text-align:center; margin-bottom:5px;"><i class="fa-solid fa-gem" style="color:#0284c7;"></i> HK블루텍</h2>
-            <p style="text-align:center; color:#64748b; font-size:12px; margin-bottom:20px;">사내 실시간 연동 그룹웨어</p>
+            <p style="text-align:center; color:#64748b; font-size:12px; margin-bottom:20px;">사내 통합 그룹웨어 시스템</p>
             
             <div class="auth-tabs">
                 <div class="auth-tab active" onclick="switchAuthTab('login')">로그인</div>
@@ -150,11 +148,11 @@
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="form-group">
                     <label for="loginId">아이디</label>
-                    <input type="text" id="loginId" class="form-control" placeholder="아이디 입력 (예: song0418_hk)" required>
+                    <input type="text" id="loginId" class="form-control" placeholder="아이디 (예: song0418_hk)" required>
                 </div>
                 <div class="form-group">
                     <label for="loginPw">비밀번호</label>
-                    <input type="password" id="loginPw" class="form-control" placeholder="비밀번호 입력" required>
+                    <input type="password" id="loginPw" class="form-control" placeholder="비밀번호" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">로그인</button>
             </form>
@@ -180,7 +178,7 @@
                     <label for="regDept">부서</label>
                     <input type="text" id="regDept" class="form-control" placeholder="예: 서비스관리팀, 영업팀" required>
                 </div>
-                <button type="submit" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">회원가입 신청</button>
+                <button type="submit" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">회원가입 완료</button>
             </form>
         </div>
     </div>
@@ -189,7 +187,7 @@
     <header class="app-header">
         <a class="header-brand" onclick="switchNavSection('sec-home', this);">
             <i class="fa-solid fa-gem" style="color:#38bdf8;"></i> HK블루텍 GROUPWARE
-            <span class="sync-badge"><i class="fa-solid fa-wifi"></i> 실시간 연동 중</span>
+            <span class="sync-badge"><i class="fa-solid fa-circle-check"></i> 시스템 정상 작동 중</span>
         </a>
         <nav class="header-nav">
             <div class="header-nav-item active" onclick="switchNavSection('sec-home', this);">홈</div>
@@ -241,7 +239,7 @@
                 <h2 style="margin-bottom:20px;">대시보드</h2>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:20px;">
                     <div class="card">
-                        <h3><i class="fa-solid fa-file-invoice"></i> 실시간 결재 문서</h3>
+                        <h3><i class="fa-solid fa-file-invoice"></i> 결재 문서</h3>
                         <p style="font-size:28px; font-weight:800; color:var(--warning-color); margin-top:10px;">
                             <span id="dashCount">0</span> 건
                         </p>
@@ -264,7 +262,7 @@
             <!-- APPROVAL LIST SECTION -->
             <section id="sec-approval" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>📑 전자결재 문서 목록 (전사 실시간 공유)</h2>
+                    <h2>📑 전자결재 문서 목록</h2>
                     <button class="btn btn-primary" onclick="openForm()"><i class="fa-solid fa-plus"></i> 기안 작성</button>
                 </div>
                 <div class="card">
@@ -349,7 +347,7 @@
             <!-- SCHEDULE SECTION -->
             <section id="sec-schedule" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h2>📅 일정 관리 캘린더 (전사 실시간 연동)</h2>
+                    <h2>📅 일정 관리 캘린더</h2>
                     <button class="btn btn-primary" onclick="openScheduleModal()"><i class="fa-solid fa-calendar-plus"></i> 새 일정 추가</button>
                 </div>
                 <div class="card">
@@ -421,7 +419,7 @@
                                 <th>성명</th>
                                 <th>직급</th>
                                 <th>부서</th>
-                                <th>권한 관리</th>
+                                <th>권한 및 관리</th>
                             </tr>
                         </thead>
                         <tbody id="memberTbody"></tbody>
@@ -462,35 +460,52 @@
     </div>
 
     <script>
-        // FIREBASE INITIALIZATION
-        const firebaseConfig = {
-            apiKey: "AIzaSyAgEmCFvCI7Ou8jPkfngObTLJGaYPQbz18",
-            authDomain: "hkbluetec.firebaseapp.com",
-            databaseURL: "https://hkbluetec-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "hkbluetec",
-            storageBucket: "hkbluetec.firebasestorage.app",
-            messagingSenderId: "997191589965",
-            appId: "1:997191589965:web:e29d58d70c8e8d3d24fc04"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.database();
-
-        // 고정 기본 계정
+        // 기본 사용자 데이터셋
         const DEFAULT_USERS = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
         };
 
+        // 로컬 저장소 이중화 보장 함수
+        function loadStorage(key, defaultData) {
+            const data = localStorage.getItem(key);
+            if (!data) {
+                localStorage.setItem(key, JSON.stringify(defaultData));
+                return defaultData;
+            }
+            try { return JSON.parse(data); } catch(e) { return defaultData; }
+        }
+
+        function saveStorage(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
         let currentUser = null;
-        let globalUsers = {...DEFAULT_USERS};
-        let globalDocs = {};
-        let globalSchedules = {};
+        let globalUsers = loadStorage('HK_USERS', DEFAULT_USERS);
+        let globalDocs = loadStorage('HK_DOCS', {});
+        let globalSchedules = loadStorage('HK_SCHEDULES', {});
 
         let calCurrentYear = 2026;
-        let calCurrentMonth = 6; // 0-indexed (6 = 7월)
+        let calCurrentMonth = 6; // 7월 (0-based)
+
+        // 초기 시작
+        function initApp() {
+            const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
+            if (savedSession) {
+                try {
+                    currentUser = JSON.parse(savedSession);
+                    document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
+                    document.getElementById('authScreen').style.display = 'none';
+                } catch(e) { 
+                    sessionStorage.removeItem('HK_CURRENT_USER'); 
+                }
+            }
+            updateBadges();
+            renderDocList();
+            renderMemberList();
+            renderOrgAll();
+            renderCalendar();
+        }
 
         function switchNavSection(secId, navElement = null) {
             showSection(secId);
@@ -515,44 +530,6 @@
             if (secId === 'sec-members') renderMemberList();
         }
 
-        // 실시간 동기화
-        function initRealtimeSync() {
-            const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
-            if (savedSession) {
-                try {
-                    currentUser = JSON.parse(savedSession);
-                    document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
-                    document.getElementById('authScreen').style.display = 'none';
-                } catch(e) { 
-                    sessionStorage.removeItem('HK_CURRENT_USER'); 
-                }
-            }
-
-            // 1. 유저 실시간 수신
-            db.ref('users').on('value', (snapshot) => {
-                const data = snapshot.val() || {};
-                globalUsers = { ...DEFAULT_USERS, ...data };
-                renderMemberList(); 
-                renderOrgAll(); 
-                populateUserSelects();
-                updateBadges(); 
-            });
-
-            // 2. 전자결재 실시간 수신
-            db.ref('docs').on('value', (snapshot) => {
-                globalDocs = snapshot.val() || {};
-                renderDocList(); 
-                updateBadges();
-            });
-
-            // 3. 일정 캘린더 실시간 수신
-            db.ref('schedules').on('value', (snapshot) => {
-                globalSchedules = snapshot.val() || {};
-                renderCalendar(); 
-                updateBadges();
-            });
-        }
-
         function switchAuthTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             if (tab === 'login') {
@@ -568,8 +545,7 @@
 
         function handleLogin(e) {
             e.preventDefault();
-            const rawId = document.getElementById('loginId').value.trim();
-            const inputId = rawId.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+            const inputId = document.getElementById('loginId').value.trim().toLowerCase();
             const inputPw = document.getElementById('loginPw').value.trim();
 
             const user = globalUsers[inputId];
@@ -592,12 +568,9 @@
             switchNavSection('sec-approval');
         }
 
-        // 회원가입 실시간 연동
         function handleRegister(e) {
             e.preventDefault();
-
-            const rawId = document.getElementById('regId').value.trim();
-            const id = rawId.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+            const id = document.getElementById('regId').value.trim().toLowerCase();
             const pw = String(document.getElementById('regPw').value.trim());
             const name = document.getElementById('regName').value.trim();
             const pos = document.getElementById('regPos').value.trim();
@@ -606,17 +579,14 @@
             if (!id) return alert('아이디를 입력해 주세요.');
 
             const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
+            globalUsers[id] = newUser;
+            saveStorage('HK_USERS', globalUsers);
 
-            db.ref('users/' + id).set(newUser, (error) => {
-                if (error) {
-                    alert("회원가입 실패: " + error.message);
-                } else {
-                    alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
-                    document.getElementById('registerForm').reset();
-                    switchAuthTab('login');
-                    document.getElementById('loginId').value = id;
-                }
-            });
+            alert(`[${name}] 님의 회원가입이 완료되었습니다!\n즉시 로그인하실 수 있습니다.`);
+            document.getElementById('registerForm').reset();
+            switchAuthTab('login');
+            document.getElementById('loginId').value = id;
+            updateBadges();
         }
 
         function handleLogout() {
@@ -825,7 +795,7 @@
             });
         }
 
-        // 결재 상신 실시간 저장 완전 수정 보완
+        // 결재 상신 기능
         function submitNewDoc(docId) {
             const title = document.getElementById('docTitleInput').value.trim();
             if(!title) {
@@ -849,15 +819,12 @@
                 createdAt: Date.now()
             };
 
-            // Firebase 실시간 DB에 상신 문서 저장
-            db.ref('docs/' + docId).set(docData)
-                .then(() => {
-                    alert('전자결재가 전사 실시간으로 성공적으로 상신되었습니다!');
-                    switchNavSection('sec-approval');
-                })
-                .catch((error) => {
-                    alert("상신 실패 (오류 내용): " + error.message + "\n\nFirebase Console의 Realtime Database 규칙(.read, .write)이 true로 열려있는지 확인해 주세요.");
-                });
+            globalDocs[docId] = docData;
+            saveStorage('HK_DOCS', globalDocs);
+
+            alert('전자결재가 성공적으로 상신되었습니다!');
+            updateBadges();
+            switchNavSection('sec-approval');
         }
 
         function viewDetail(docId) {
@@ -885,14 +852,13 @@
         }
 
         function approveDoc(docId) {
-            db.ref('docs/' + docId).update({ status: 'approved' })
-                .then(() => {
-                    alert('성공적으로 결재 승인 처리되었습니다!');
-                    switchNavSection('sec-approval');
-                })
-                .catch((err) => {
-                    alert("승인 오류: " + err.message);
-                });
+            if(globalDocs[docId]) {
+                globalDocs[docId].status = 'approved';
+                saveStorage('HK_DOCS', globalDocs);
+                alert('성공적으로 결재 승인 처리되었습니다!');
+                updateBadges();
+                switchNavSection('sec-approval');
+            }
         }
 
         function renderOrgAll() {
@@ -913,7 +879,7 @@
             });
 
             Object.keys(deptMap).forEach(dept => {
-                html += `<div class="org-branch"><div class="org-node" style="border-color:#38bdf8; background:#f0f9ff;"><div style="color:#0284c7; font-weight:800;">${dept}</div></div>`;
+                html += `<div class="org-branch" style="display:flex; flex-direction:column; align-items:center;"><div class="org-node" style="border-color:#38bdf8; background:#f0f9ff;"><div style="color:#0284c7; font-weight:800;">${dept}</div></div>`;
                 deptMap[dept].forEach(u => {
                     html += `<div class="org-node" style="border-color:#cbd5e1; margin-top:5px; padding:4px 8px; min-width:100px;"><div style="font-size:11px; color:#64748b;">${u.pos}</div><div>${u.name}</div></div>`;
                 });
@@ -934,10 +900,50 @@
             const tbody = document.getElementById('memberTbody');
             if(!tbody) return;
             tbody.innerHTML = '';
+            
+            const isCurrentOwner = currentUser && (currentUser.id === 'song0418_hk' || currentUser.isOwner);
+
             Object.values(globalUsers).forEach(u => {
                 const isOwner = u.id === 'song0418_hk' || u.isOwner;
-                tbody.innerHTML += `<tr><td><strong>${u.id}</strong> ${isOwner ? '<span class="badge-status badge-admin">최고관리자</span>' : ''}</td><td>••••••••</td><td>${u.name}</td><td>${u.pos}</td><td>${u.dept}</td><td><button class="btn" style="padding:2px 6px;" onclick="openUserModal('${u.id}')">수정</button></td></tr>`;
+                
+                let actionBtnHtml = `<button class="btn" style="padding:2px 8px; font-size:12px;" onclick="openUserModal('${u.id}')"><i class="fa-solid fa-pen"></i> 수정</button>`;
+                
+                // 최고관리자만 다른 사용자 계정 삭제 가능
+                if (isCurrentOwner && !isOwner) {
+                    actionBtnHtml += ` <button class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="deleteUser('${u.id}')"><i class="fa-solid fa-trash"></i> 계정 삭제</button>`;
+                }
+
+                tbody.innerHTML += `<tr>
+                    <td><strong>${u.id}</strong> ${isOwner ? '<span class="badge-status badge-admin">최고관리자</span>' : ''}</td>
+                    <td>••••••••</td>
+                    <td>${u.name}</td>
+                    <td>${u.pos}</td>
+                    <td>${u.dept}</td>
+                    <td>${actionBtnHtml}</td>
+                </tr>`;
             });
+        }
+
+        // 최고관리자 전용 계정 삭제 함수
+        function deleteUser(userId) {
+            if (!currentUser || (currentUser.id !== 'song0418_hk' && !currentUser.isOwner)) {
+                alert('계정 삭제는 최고 관리자만 수행할 수 있습니다.');
+                return;
+            }
+
+            if (userId === 'song0418_hk') {
+                alert('최고 관리자 계정은 삭제할 수 없습니다.');
+                return;
+            }
+
+            if (confirm(`정말로 계정 [${userId}] (${globalUsers[userId].name}) 님을 삭제하시겠습니까?`)) {
+                delete globalUsers[userId];
+                saveStorage('HK_USERS', globalUsers);
+                alert('계정이 성공적으로 삭제되었습니다.');
+                renderMemberList();
+                renderOrgAll();
+                updateBadges();
+            }
         }
 
         function openUserModal(userId = null) {
@@ -959,10 +965,8 @@
             document.getElementById('userModal').style.display = 'flex';
         }
 
-        // 임직원 및 사원 추가 실시간 반영
         function saveUser() {
-            const rawId = document.getElementById('userIdInput').value.trim();
-            const id = rawId.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+            const id = document.getElementById('userIdInput').value.trim().toLowerCase();
             const pw = String(document.getElementById('userPwInput').value.trim());
             const name = document.getElementById('userName').value.trim();
             const pos = document.getElementById('userPos').value.trim();
@@ -971,15 +975,14 @@
             if(!id || !name) return alert('필수 입력 항목이 누락되었습니다.');
 
             const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
+            globalUsers[id] = u;
+            saveStorage('HK_USERS', globalUsers);
 
-            db.ref('users/' + id).set(u)
-                .then(() => {
-                    alert('임직원 정보가 실시간 반영되었습니다.');
-                    closeModal('userModal');
-                })
-                .catch((error) => {
-                    alert("회원 저장 실패: " + error.message);
-                });
+            alert('임직원 정보가 등록/수정되었습니다.');
+            closeModal('userModal');
+            renderMemberList();
+            renderOrgAll();
+            updateBadges();
         }
 
         function renderCalendar() {
@@ -1042,7 +1045,6 @@
             document.getElementById('schModal').style.display = 'flex'; 
         }
         
-        // 일정 등록 실시간 반영
         function saveSchedule() {
             const title = document.getElementById('schTitle').value.trim();
             const date = document.getElementById('schDate').value;
@@ -1052,14 +1054,13 @@
             const id = 'SCH-' + Date.now();
             const sch = { id, title, date, time };
 
-            db.ref('schedules/' + id).set(sch)
-                .then(() => {
-                    alert('일정이 등록되어 전사에 실시간 공유되었습니다.');
-                    closeModal('schModal');
-                })
-                .catch((error) => {
-                    alert("일정 저장 실패: " + error.message);
-                });
+            globalSchedules[id] = sch;
+            saveStorage('HK_SCHEDULES', globalSchedules);
+
+            alert('일정이 정상 등록되었습니다.');
+            closeModal('schModal');
+            renderCalendar();
+            updateBadges();
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -1071,7 +1072,7 @@
             if(document.getElementById('dashMemCount')) document.getElementById('dashMemCount').innerText = Object.keys(globalUsers).length;
         }
 
-        window.onload = initRealtimeSync;
+        window.onload = initApp;
     </script>
 </body>
 </html>
