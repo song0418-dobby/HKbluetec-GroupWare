@@ -6,10 +6,6 @@
     <title>HK블루텍 전자결재 그룹웨어</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
         :root {
@@ -187,14 +183,14 @@
     <header class="app-header">
         <a class="header-brand" onclick="switchNavSection('sec-home', this);">
             <i class="fa-solid fa-gem" style="color:#38bdf8;"></i> HK블루텍 GROUPWARE
-            <span class="sync-badge"><i class="fa-solid fa-circle-check"></i> 시스템 정상 작동 중</span>
+            <span class="sync-badge"><i class="fa-solid fa-crown"></i> 최고관리자 통합제어 모드</span>
         </a>
         <nav class="header-nav">
             <div class="header-nav-item active" onclick="switchNavSection('sec-home', this);">홈</div>
             <div class="header-nav-item" onclick="switchNavSection('sec-approval', this);">전자결재</div>
             <div class="header-nav-item" onclick="switchNavSection('sec-schedule', this);">일정 캘린더</div>
             <div class="header-nav-item" onclick="switchNavSection('sec-org', this);">조직도 관리</div>
-            <div class="header-nav-item" onclick="switchNavSection('sec-members', this);">회원 관리</div>
+            <div class="header-nav-item" onclick="switchNavSection('sec-members', this);">회원 및 가입 관리</div>
         </nav>
         <div>
             <span id="currentUserInfo" style="font-weight:700; color:#fff; margin-right:15px;">-</span>
@@ -225,7 +221,7 @@
                 </li>
                 <li class="menu-item nav-sidebar-item">
                     <a onclick="switchNavSection('sec-members');">
-                        <span><i class="fa-solid fa-users-gear"></i> 회원 및 권한 관리</span>
+                        <span><i class="fa-solid fa-users-gear"></i> 전체 회원가입 내역</span>
                     </a>
                 </li>
             </ul>
@@ -239,7 +235,7 @@
                 <h2 style="margin-bottom:20px;">대시보드</h2>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:20px;">
                     <div class="card">
-                        <h3><i class="fa-solid fa-file-invoice"></i> 결재 문서</h3>
+                        <h3><i class="fa-solid fa-file-invoice"></i> 전체 결재 문서</h3>
                         <p style="font-size:28px; font-weight:800; color:var(--warning-color); margin-top:10px;">
                             <span id="dashCount">0</span> 건
                         </p>
@@ -251,7 +247,7 @@
                         </p>
                     </div>
                     <div class="card">
-                        <h3><i class="fa-solid fa-users"></i> 등록 임직원 수</h3>
+                        <h3><i class="fa-solid fa-users"></i> 전체 가입 임직원 수</h3>
                         <p style="font-size:28px; font-weight:800; color:var(--success-color); margin-top:10px;">
                             <span id="dashMemCount">0</span> 명
                         </p>
@@ -262,7 +258,7 @@
             <!-- APPROVAL LIST SECTION -->
             <section id="sec-approval" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>📑 전자결재 문서 목록</h2>
+                    <h2>📑 전자결재 전체 문서 목록 (최고관리자 전체 조회)</h2>
                     <button class="btn btn-primary" onclick="openForm()"><i class="fa-solid fa-plus"></i> 기안 작성</button>
                 </div>
                 <div class="card">
@@ -275,7 +271,7 @@
                                 <th>제목</th>
                                 <th>기안자</th>
                                 <th>결재상태</th>
-                                <th>상세보기</th>
+                                <th>관리/상세보기</th>
                             </tr>
                         </thead>
                         <tbody id="realDocTbody"></tbody>
@@ -403,9 +399,9 @@
             <section id="sec-members" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <div>
-                        <h2>👥 회원 가입 목록 및 최고 관리자 권한 제어</h2>
+                        <h2>👥 전체 가입자 이력 및 계정 제어</h2>
                         <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">
-                            최고 관리자 계정: <strong style="color:var(--primary-color);">song0418_hk</strong>
+                            최고 관리자 계정: <strong style="color:var(--primary-color);">song0418_hk</strong> (가입된 전체 계정 정보 조회/수정/삭제 지원)
                         </p>
                     </div>
                     <button class="btn btn-primary" onclick="openUserModal()"><i class="fa-solid fa-user-plus"></i> 신규 회원 등록</button>
@@ -419,7 +415,7 @@
                                 <th>성명</th>
                                 <th>직급</th>
                                 <th>부서</th>
-                                <th>권한 및 관리</th>
+                                <th>권한 및 수정/삭제</th>
                             </tr>
                         </thead>
                         <tbody id="memberTbody"></tbody>
@@ -460,13 +456,13 @@
     </div>
 
     <script>
-        // 기본 사용자 데이터셋
+        // 기본 최고관리자 및 사용자 데이터
         const DEFAULT_USERS = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
         };
 
-        // 로컬 저장소 이중화 보장 함수
+        // 공유 데이터 로딩
         function loadStorage(key, defaultData) {
             const data = localStorage.getItem(key);
             if (!data) {
@@ -488,7 +484,7 @@
         let calCurrentYear = 2026;
         let calCurrentMonth = 6; // 7월 (0-based)
 
-        // 초기 시작
+        // 앱 초기화
         function initApp() {
             const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
             if (savedSession) {
@@ -505,6 +501,12 @@
             renderMemberList();
             renderOrgAll();
             renderCalendar();
+        }
+
+        // 최고관리자 여부 검증
+        function checkIsOwner() {
+            if (!currentUser) return false;
+            return currentUser.id === 'song0418_hk' || currentUser.isOwner === true;
         }
 
         function switchNavSection(secId, navElement = null) {
@@ -582,11 +584,12 @@
             globalUsers[id] = newUser;
             saveStorage('HK_USERS', globalUsers);
 
-            alert(`[${name}] 님의 회원가입이 완료되었습니다!\n즉시 로그인하실 수 있습니다.`);
+            alert(`[${name}] 님의 회원가입이 성공적으로 완료되었습니다!\n최고관리자 화면에 즉시 등록 처리됩니다.`);
             document.getElementById('registerForm').reset();
             switchAuthTab('login');
             document.getElementById('loginId').value = id;
             updateBadges();
+            renderMemberList();
         }
 
         function handleLogout() {
@@ -733,14 +736,23 @@
             if(document.getElementById('vacDays')) document.getElementById('vacDays').innerText = val + ' 일';
         }
 
+        // 결재 문서 목록 조회 (최고관리자는 전체 조회 가능)
         function renderDocList() {
             const tbody = document.getElementById('realDocTbody');
             if(!tbody) return;
             tbody.innerHTML = '';
-            const docsList = Object.values(globalDocs);
+
+            const isOwner = checkIsOwner();
+            let docsList = Object.values(globalDocs);
+
+            // 일반 사용자는 본인 기안 or 결재 지정 문서만, 최고관리자는 전체 조회
+            if (!isOwner && currentUser) {
+                const myNamePos = `${currentUser.name} ${currentUser.pos}`;
+                docsList = docsList.filter(d => d.authorId === currentUser.id || d.author === myNamePos || d.app1 === myNamePos || d.app2 === myNamePos);
+            }
 
             if (docsList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">상신된 결재 문서가 없습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">조회 가능한 결재 문서가 없습니다.</td></tr>`;
                 return;
             }
 
@@ -749,6 +761,8 @@
                 let badgeHtml = '<span class="badge-status badge-pending">결재 대기</span>';
                 if (d.status === 'approved') badgeHtml = '<span class="badge-status badge-approved">최종 승인</span>';
 
+                let deleteBtn = isOwner ? `<button class="btn btn-danger" style="padding:4px 8px; font-size:11px; margin-left:4px;" onclick="deleteDoc('${d.id}')"><i class="fa-solid fa-trash"></i> 삭제</button>` : '';
+
                 tr.innerHTML = `
                     <td><strong>${d.id}</strong></td>
                     <td><span class="badge-status" style="background:#f1f5f9;">${d.formType}</span></td>
@@ -756,10 +770,25 @@
                     <td><strong>${d.title}</strong></td>
                     <td>${d.author}</td>
                     <td>${badgeHtml}</td>
-                    <td><button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="viewDetail('${d.id}')"><i class="fa-solid fa-eye"></i> 열람/결재</button></td>
+                    <td>
+                        <button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="viewDetail('${d.id}')"><i class="fa-solid fa-eye"></i> 열람/결재</button>
+                        ${deleteBtn}
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // 최고관리자 문서 삭제 기능
+        function deleteDoc(docId) {
+            if (!checkIsOwner()) return alert('최고 관리자만 삭제할 수 있습니다.');
+            if (confirm(`문서번호 [${docId}]를 완전히 삭제하시겠습니까?`)) {
+                delete globalDocs[docId];
+                saveStorage('HK_DOCS', globalDocs);
+                alert('결재 문서가 삭제되었습니다.');
+                renderDocList();
+                updateBadges();
+            }
         }
 
         function openForm() {
@@ -795,7 +824,6 @@
             });
         }
 
-        // 결재 상신 기능
         function submitNewDoc(docId) {
             const title = document.getElementById('docTitleInput').value.trim();
             if(!title) {
@@ -811,6 +839,7 @@
                 formType: document.getElementById('formTypeSelect').value,
                 title: title,
                 author: currentUser ? `${currentUser.name} ${currentUser.pos}` : '기안자',
+                authorId: currentUser ? currentUser.id : '',
                 dept: currentUser ? currentUser.dept : '서비스관리팀',
                 date: document.getElementById('docDate').innerText,
                 app1: app1,
@@ -896,27 +925,28 @@
             });
         }
 
+        // 회원 가입 및 계정 전체 내역 조회
         function renderMemberList() {
             const tbody = document.getElementById('memberTbody');
             if(!tbody) return;
             tbody.innerHTML = '';
             
-            const isCurrentOwner = currentUser && (currentUser.id === 'song0418_hk' || currentUser.isOwner);
+            const isCurrentOwner = checkIsOwner();
 
             Object.values(globalUsers).forEach(u => {
                 const isOwner = u.id === 'song0418_hk' || u.isOwner;
                 
                 let actionBtnHtml = `<button class="btn" style="padding:2px 8px; font-size:12px;" onclick="openUserModal('${u.id}')"><i class="fa-solid fa-pen"></i> 수정</button>`;
                 
-                // 최고관리자만 다른 사용자 계정 삭제 가능
+                // 최고관리자는 비밀번호 원문 조회 및 타 계정 삭제 가능
                 if (isCurrentOwner && !isOwner) {
                     actionBtnHtml += ` <button class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="deleteUser('${u.id}')"><i class="fa-solid fa-trash"></i> 계정 삭제</button>`;
                 }
 
                 tbody.innerHTML += `<tr>
                     <td><strong>${u.id}</strong> ${isOwner ? '<span class="badge-status badge-admin">최고관리자</span>' : ''}</td>
-                    <td>••••••••</td>
-                    <td>${u.name}</td>
+                    <td><span style="font-family:monospace; color:var(--primary-color); font-weight:bold;">${isCurrentOwner ? u.pw : '••••••••'}</span></td>
+                    <td><strong>${u.name}</strong></td>
                     <td>${u.pos}</td>
                     <td>${u.dept}</td>
                     <td>${actionBtnHtml}</td>
@@ -924,9 +954,8 @@
             });
         }
 
-        // 최고관리자 전용 계정 삭제 함수
         function deleteUser(userId) {
-            if (!currentUser || (currentUser.id !== 'song0418_hk' && !currentUser.isOwner)) {
+            if (!checkIsOwner()) {
                 alert('계정 삭제는 최고 관리자만 수행할 수 있습니다.');
                 return;
             }
@@ -936,7 +965,7 @@
                 return;
             }
 
-            if (confirm(`정말로 계정 [${userId}] (${globalUsers[userId].name}) 님을 삭제하시겠습니까?`)) {
+            if (confirm(`정말로 계정 [${userId}] (${globalUsers[userId].name}) 님을 완전히 삭제하시겠습니까?`)) {
                 delete globalUsers[userId];
                 saveStorage('HK_USERS', globalUsers);
                 alert('계정이 성공적으로 삭제되었습니다.');
@@ -978,7 +1007,7 @@
             globalUsers[id] = u;
             saveStorage('HK_USERS', globalUsers);
 
-            alert('임직원 정보가 등록/수정되었습니다.');
+            alert('임직원 정보가 성공적으로 등록/수정되었습니다.');
             closeModal('userModal');
             renderMemberList();
             renderOrgAll();
