@@ -154,7 +154,7 @@
                     <label>비밀번호</label>
                     <input type="password" id="loginPw" class="form-control" placeholder="비밀번호 입력" required>
                 </div>
-                <button type="submit" id="btnLoginSubmit" class="btn btn-primary" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">로그인</button>
+                <button type="submit" class="btn btn-primary" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">로그인</button>
             </form>
 
             <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
@@ -176,9 +176,9 @@
                 </div>
                 <div class="form-group">
                     <label>부서</label>
-                    <input type="text" id="regDept" class="form-control" placeholder="예: 경영기획팀, 영업팀" required>
+                    <input type="text" id="regDept" class="form-control" placeholder="예: 서비스관리팀, 영업팀" required>
                 </div>
-                <button type="submit" id="btnRegSubmit" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">회원가입 신청</button>
+                <button type="submit" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">회원가입 신청</button>
             </form>
         </div>
     </div>
@@ -187,7 +187,7 @@
     <header class="app-header">
         <a href="#" class="header-brand" onclick="setActiveNav(this); showSection('sec-home');">
             <i class="fa-solid fa-gem" style="color:#38bdf8;"></i> HK블루텍 GROUPWARE
-            <span class="sync-badge" id="syncStatusBadge"><i class="fa-solid fa-wifi"></i> 실시간 연동 완료</span>
+            <span class="sync-badge"><i class="fa-solid fa-wifi"></i> 실시간 연동 중</span>
         </a>
         <nav class="header-nav">
             <div class="header-nav-item active" onclick="setActiveNav(this); showSection('sec-home');">홈</div>
@@ -476,7 +476,7 @@
         }
         const db = firebase.database();
 
-        // 고정 데이터 백업 및 공유
+        // 기본 고정 계정 데이터
         const DEFAULT_USERS = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
@@ -487,27 +487,9 @@
         let globalDocs = {};
         let globalSchedules = {};
 
-        // 로컬 스토리지에 유저 저장하여 상호 간 공유 보장
-        function loadLocalUsers() {
-            try {
-                const stored = localStorage.getItem('HK_GLOBAL_USERS');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    globalUsers = { ...DEFAULT_USERS, ...parsed };
-                }
-            } catch(e) {}
-        }
-
-        function saveLocalUsers() {
-            try {
-                localStorage.setItem('HK_GLOBAL_USERS', JSON.stringify(globalUsers));
-            } catch(e) {}
-        }
-
         // 실시간 무한 연동 (Firebase Realtime Database 리스너)
         function initRealtimeSync() {
-            loadLocalUsers();
-
+            // 세션 유지
             const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
             if (savedSession) {
                 try {
@@ -519,36 +501,31 @@
                 }
             }
 
-            // 1. 유저 정보 실시간 연동
+            // 1. 유저 데이터 실시간 수신 및 즉시 화면 동기화
             db.ref('groupware/users').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data && Object.keys(data).length > 0) {
-                    globalUsers = { ...DEFAULT_USERS, ...data };
-                    saveLocalUsers();
-                }
+                const data = snapshot.val() || {};
+                globalUsers = { ...DEFAULT_USERS, ...data };
+                
+                // 화면 리렌더링
                 renderMemberList(); 
                 renderOrgAll(); 
-                updateBadges(); 
                 populateUserSelects();
+                updateBadges(); 
             });
 
-            // 2. 결재 문서 실시간 연동
+            // 2. 결재 문서 실시간 수신 및 즉시 화면 동기화
             db.ref('groupware/docs').on('value', (snapshot) => {
                 globalDocs = snapshot.val() || {};
                 renderDocList(); 
                 updateBadges();
             });
 
-            // 3. 일정 실시간 연동
+            // 3. 일정 데이터 실시간 수신 및 즉시 화면 동기화
             db.ref('groupware/schedules').on('value', (snapshot) => {
                 globalSchedules = snapshot.val() || {};
                 renderCalendar(); 
                 updateBadges();
             });
-
-            renderMemberList();
-            renderOrgAll();
-            updateBadges();
         }
 
         function switchAuthTab(tab) {
@@ -571,8 +548,7 @@
             const inputId = rawId.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
             const inputPw = document.getElementById('loginPw').value.trim();
 
-            loadLocalUsers();
-            let user = globalUsers[inputId];
+            const user = globalUsers[inputId];
 
             if (!user) {
                 alert('존재하지 않는 아이디입니다.');
@@ -593,7 +569,7 @@
             renderDocList();
         }
 
-        // 회원가입 (절대 멈추지 않는 즉시 완결 구조)
+        // 회원가입 (실시간 DB 저장 처리)
         function handleRegister(e) {
             e.preventDefault();
 
@@ -609,21 +585,30 @@
                 return;
             }
 
+            if (globalUsers[id]) {
+                alert('이미 등록되었거나 사용 중인 아이디입니다. 로그인해 주세요.');
+                switchAuthTab('login');
+                document.getElementById('loginId').value = id;
+                return;
+            }
+
             const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
 
-            // 즉시 메모리 및 저장소 반영
-            globalUsers[id] = newUser;
-            saveLocalUsers();
-
-            // 백그라운드로 Firebase 동기화 (응답 대기 안함)
-            try {
-                db.ref(`groupware/users/${id}`).set(newUser);
-            } catch(err) {}
-
-            alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
-            document.getElementById('registerForm').reset();
-            switchAuthTab('login');
-            document.getElementById('loginId').value = id;
+            // Realtime Database에 즉시 등록
+            db.ref(`groupware/users/${id}`).set(newUser).then(() => {
+                alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
+                document.getElementById('registerForm').reset();
+                switchAuthTab('login');
+                document.getElementById('loginId').value = id;
+            }).catch((err) => {
+                // 네트워크 예외 처리 시에도 로컬에 즉시 등록 처리
+                globalUsers[id] = newUser;
+                renderMemberList();
+                renderOrgAll();
+                alert(`[${name}] 님의 회원가입이 처리되었습니다.`);
+                switchAuthTab('login');
+                document.getElementById('loginId').value = id;
+            });
         }
 
         function handleLogout() {
@@ -842,10 +827,10 @@
                 status: 'pending'
             };
 
-            globalDocs[docId] = docData;
-            try { db.ref(`groupware/docs/${docId}`).set(docData); } catch(e) {}
-            alert('전자결재가 실시간으로 상신되었습니다!');
-            showSection('sec-approval');
+            db.ref(`groupware/docs/${docId}`).set(docData).then(() => {
+                alert('전자결재가 전사 실시간으로 상신되었습니다!');
+                showSection('sec-approval');
+            });
         }
 
         function viewDetail(docId) {
@@ -871,10 +856,10 @@
         }
 
         function approveDoc(docId) {
-            if(globalDocs[docId]) globalDocs[docId].status = 'approved';
-            try { db.ref(`groupware/docs/${docId}`).update({ status: 'approved' }); } catch(e) {}
-            alert('승인 처리되었습니다!');
-            showSection('sec-approval');
+            db.ref(`groupware/docs/${docId}`).update({ status: 'approved' }).then(() => {
+                alert('승인 처리되었습니다!');
+                showSection('sec-approval');
+            });
         }
 
         function renderOrgAll() {
@@ -952,14 +937,11 @@
             if(!id || !name) return alert('필수 입력 항목이 누락되었습니다.');
 
             const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
-            globalUsers[id] = u;
-            saveLocalUsers();
-            try { db.ref(`groupware/users/${id}`).set(u); } catch(e) {}
-            
-            alert('임직원 정보가 저장되었습니다.');
-            closeModal('userModal');
-            renderMemberList();
-            renderOrgAll();
+
+            db.ref(`groupware/users/${id}`).set(u).then(() => {
+                alert('임직원 정보가 실시간 반영되었습니다.');
+                closeModal('userModal');
+            });
         }
 
         function renderCalendar() {
@@ -999,12 +981,10 @@
             const id = 'SCH-' + Date.now();
             const sch = { id, title, date, time };
 
-            globalSchedules[id] = sch;
-            try { db.ref(`groupware/schedules/${id}`).set(sch); } catch(e) {}
-            
-            alert('일정이 등록되었습니다.');
-            closeModal('schModal');
-            renderCalendar();
+            db.ref(`groupware/schedules/${id}`).set(sch).then(() => {
+                alert('일정이 등록되어 전사에 공유되었습니다.');
+                closeModal('schModal');
+            });
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
