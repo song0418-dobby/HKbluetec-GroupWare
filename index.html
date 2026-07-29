@@ -57,7 +57,7 @@
         }
         .header-nav-item:hover, .header-nav-item.active { color: #fff; border-bottom-color: #38bdf8; background: rgba(255,255,255,0.05); }
 
-        /* App Container */
+        /* Layout */
         .app-container { display: flex; width: 100%; margin-top: var(--header-height); height: calc(100vh - var(--header-height)); }
         .app-sidebar {
             width: var(--sidebar-width); background-color: var(--bg-surface); border-right: 1px solid var(--border-light);
@@ -76,7 +76,7 @@
         .page-section { display: none; }
         .page-section.active { display: block; }
 
-        /* Elements */
+        /* UI Common */
         .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid var(--border-color); background-color: #fff; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); }
         .btn-danger { background-color: var(--danger-color); color: #fff; border-color: var(--danger-color); }
@@ -96,7 +96,16 @@
         .form-group { margin-bottom: 14px; }
         .form-group label { display: block; font-weight: 700; margin-bottom: 5px; font-size: 12px; }
 
-        /* Document Form Style */
+        /* Visual Organization Chart */
+        .org-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .org-dept-card { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+        .org-dept-header { background: #0f172a; color: #fff; padding: 12px 16px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+        .org-member-list { padding: 10px; }
+        .org-member-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid var(--border-light); }
+        .org-member-item:last-child { border-bottom: none; }
+        .org-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-weight: 800; }
+
+        /* Document Styling */
         .document-wrapper { background: #fff; max-width: 900px; margin: 0 auto; padding: 35px 40px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .doc-header-selector { background: #f1f5f9; padding: 12px 20px; border-radius: 6px; display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
         .doc-title-main { text-align: center; font-size: 24px; font-weight: 800; margin-bottom: 25px; color: #0f172a; text-decoration: underline; text-underline-offset: 6px; }
@@ -114,7 +123,7 @@
     <div id="authScreen">
         <div class="auth-card">
             <h2 style="text-align:center; margin-bottom:5px;"><i class="fa-solid fa-gem" style="color:#0284c7;"></i> HK블루텍</h2>
-            <p style="text-align:center; color:#64748b; font-size:12px; margin-bottom:20px;">그룹웨어 인증 센터</p>
+            <p style="text-align:center; color:#64748b; font-size:12px; margin-bottom:20px;">그룹웨어 로그인 / 회원가입</p>
             
             <div class="auth-tabs">
                 <div id="tabLogin" class="auth-tab active" onclick="switchTab('login')">로그인</div>
@@ -156,7 +165,7 @@
                     <label>부서</label>
                     <input type="text" id="regDept" class="form-control" placeholder="예: 서비스관리팀, 영업팀">
                 </div>
-                <button type="button" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;" onclick="doRegister()">회원가입 완료</button>
+                <button type="button" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;" onclick="doRegister()">회원가입 신청</button>
             </div>
         </div>
     </div>
@@ -170,6 +179,7 @@
             <div class="header-nav-item active" onclick="setActiveNav(this); showSection('sec-home');">홈</div>
             <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-approval'); renderDocs();">전자결재</div>
             <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-schedule');">일정관리</div>
+            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-org'); renderOrgChart();">조직도</div>
             <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-members'); renderMembers();">임직원 관리</div>
         </nav>
         <div>
@@ -195,8 +205,13 @@
                     </a>
                 </li>
                 <li class="menu-item">
+                    <a onclick="showSection('sec-org'); renderOrgChart();">
+                        <span><i class="fa-solid fa-sitemap"></i> 전사 조직도</span>
+                    </a>
+                </li>
+                <li class="menu-item">
                     <a onclick="showSection('sec-members'); renderMembers();">
-                        <span><i class="fa-solid fa-users-gear"></i> 임직원 조직도</span>
+                        <span><i class="fa-solid fa-users-gear"></i> 임직원 명단 관리</span>
                     </a>
                 </li>
             </ul>
@@ -248,8 +263,14 @@
             <section id="sec-schedule" class="page-section">
                 <h2 style="margin-bottom:20px;">📅 전사 일정 관리</h2>
                 <div class="card">
-                    <p style="color:var(--text-muted);">전사 공유 일정이 등록되는 공간입니다.</p>
+                    <p style="color:var(--text-muted);">등록된 전사 일정이 공유되는 공간입니다.</p>
                 </div>
+            </section>
+
+            <!-- VISUAL ORG CHART SECTION -->
+            <section id="sec-org" class="page-section">
+                <h2 style="margin-bottom:20px;">🌐 전사 시각화 조직도</h2>
+                <div class="org-grid" id="orgGrid"></div>
             </section>
 
             <!-- FORM & DETAIL SECTION -->
@@ -272,14 +293,18 @@
 
                     <h1 class="doc-title-main" id="formHeaderTitle">HK블루텍 구매 품의서</h1>
                     
+                    <!-- 결재선 및 기안정보 테이블 -->
                     <table class="doc-table">
                         <tr>
-                            <th style="width:20%;">문서번호</th><td id="docNumText">-</td>
-                            <th style="width:20%;">기안부서</th><td id="docDeptText">-</td>
+                            <th style="width:15%;">문서번호</th><td id="docNumText" style="width:35%;">-</td>
+                            <th style="width:15%;">결재선</th><td style="width:35%;">기안자 ➔ 부서장 ➔ 대표이사</td>
                         </tr>
                         <tr>
+                            <th>기안부서</th><td id="docDeptText">-</td>
                             <th>기안자</th><td id="docAuthorText">-</td>
-                            <th>기안일자</th><td id="docDateText">-</td>
+                        </tr>
+                        <tr>
+                            <th>기안일자</th><td id="docDateText" colspan="3">-</td>
                         </tr>
                     </table>
 
@@ -288,9 +313,12 @@
                         <input type="text" id="docTitleInput" class="form-control" placeholder="문서 제목을 입력하세요.">
                     </div>
 
-                    <div class="form-group">
-                        <label>상세 내용</label>
-                        <textarea id="docContentInput" class="form-control" rows="6" placeholder="상세 결재 내용을 작성하세요."></textarea>
+                    <!-- 동적 세부 양식 컨테이너 -->
+                    <div id="dynamicFormFields">
+                        <div class="form-group">
+                            <label>상세 내용 및 사유</label>
+                            <textarea id="docContentInput" class="form-control" rows="6" placeholder="상세 기안 내용을 작성하세요."></textarea>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -298,7 +326,7 @@
             <!-- MEMBERS MANAGEMENT -->
             <section id="sec-members" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>👥 임직원 및 조직도 관리</h2>
+                    <h2>👥 임직원 및 회원 관리</h2>
                     <button class="btn btn-primary" onclick="openAddMemberModal()"><i class="fa-solid fa-user-plus"></i> 사원 직접 추가</button>
                 </div>
                 <div class="card">
@@ -337,7 +365,7 @@
     </div>
 
     <script>
-        // FIREBASE SETUP
+        // FIREBASE CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyAgEmCFvCI7Ou8jPkfngObTLJGaYPQbz18",
             authDomain: "hkbluetec.firebaseapp.com",
@@ -359,7 +387,7 @@
         let docsData = {};
         let currentUser = null;
 
-        // DB REALTIME SYNC (CHALLENGE FIXED: child_added & value sync)
+        // INIT & REALTIME LISTENERS
         window.onload = function() {
             const session = sessionStorage.getItem('HK_USER');
             if (session) {
@@ -370,21 +398,20 @@
                 } catch(e) {}
             }
 
-            // Realtime Sync Users
             db.ref('users').on('value', (snap) => {
                 const val = snap.val();
                 if(val) usersData = { ...usersData, ...val };
                 renderMembers();
+                renderOrgChart();
                 updateDashboard();
-            }, (err) => console.error("Firebase Users Read Failed:", err));
+            }, err => console.error("Firebase Users error:", err));
 
-            // Realtime Sync Docs
             db.ref('docs').on('value', (snap) => {
                 const val = snap.val();
                 if(val) docsData = val;
                 renderDocs();
                 updateDashboard();
-            }, (err) => console.error("Firebase Docs Read Failed:", err));
+            }, err => console.error("Firebase Docs error:", err));
         };
 
         function switchTab(type) {
@@ -401,16 +428,15 @@
             }
         }
 
-        // LOGIN WITH SAFE CHECK
         function doLogin() {
             const id = document.getElementById('loginId').value.trim().toLowerCase();
             const pw = document.getElementById('loginPw').value.trim();
 
-            if(!id || !pw) return alert('아이디와 비밀번호를 모두 입력해 주세요.');
+            if(!id || !pw) return alert('아이디와 비밀번호를 입력하세요.');
 
             const target = usersData[id];
             if(!target) return alert('존재하지 않는 아이디입니다.');
-            if(String(target.pw) !== String(pw)) return alert('비밀번호가 일치하지 않습니다.');
+            if(String(target.pw) !== String(pw)) return alert('비밀번호가 올바르지 않습니다.');
 
             currentUser = target;
             sessionStorage.setItem('HK_USER', JSON.stringify(currentUser));
@@ -420,7 +446,6 @@
             renderDocs();
         }
 
-        // REGISTER WITH FIREBASE CATCH
         function doRegister() {
             const id = document.getElementById('regId').value.trim().toLowerCase();
             const pw = document.getElementById('regPw').value.trim();
@@ -428,15 +453,15 @@
             const pos = document.getElementById('regPos').value.trim();
             const dept = document.getElementById('regDept').value.trim();
 
-            if(!id || !pw || !name || !pos || !dept) return alert('모든 회원가입 항목을 입력해 주세요.');
-            if(usersData[id]) return alert('이미 등록된 아이디입니다.');
+            if(!id || !pw || !name || !pos || !dept) return alert('모든 가입 항목을 작성해 주세요.');
+            if(usersData[id]) return alert('이미 사용 중인 아이디입니다.');
 
             const newUser = { id, pw, name, pos, dept, isAdmin: (id === 'song0418_hk') };
 
             usersData[id] = newUser;
             db.ref(`users/${id}`).set(newUser)
                 .then(() => {
-                    alert(`[${name}] 님의 회원가입이 완료되었습니다.`);
+                    alert(`[${name}] 님, 회원가입이 정상 완료되었습니다.`);
                     document.getElementById('regId').value = '';
                     document.getElementById('regPw').value = '';
                     document.getElementById('regName').value = '';
@@ -445,9 +470,7 @@
                     switchTab('login');
                     document.getElementById('loginId').value = id;
                 })
-                .catch((err) => {
-                    alert('저장 실패: Firebase 권한 규칙을 확인해 주세요. (' + err.message + ')');
-                });
+                .catch((err) => alert('가입 오류: ' + err.message));
         }
 
         function doLogout() {
@@ -469,7 +492,48 @@
             document.getElementById('formHeaderTitle').innerText = `HK블루텍 ${val}`;
         }
 
-        // RENDER DOCS
+        // RENDER VISUAL ORG CHART
+        function renderOrgChart() {
+            const container = document.getElementById('orgGrid');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const depts = {};
+            Object.values(usersData).forEach(u => {
+                const deptName = u.dept || '기타';
+                if(!depts[deptName]) depts[deptName] = [];
+                depts[deptName].push(u);
+            });
+
+            Object.keys(depts).forEach(dName => {
+                const card = document.createElement('div');
+                card.className = 'org-dept-card';
+
+                let membersHtml = '';
+                depts[dName].forEach(m => {
+                    membersHtml += `
+                        <div class="org-member-item">
+                            <div class="org-avatar">${m.name.charAt(0)}</div>
+                            <div>
+                                <div style="font-weight:700;">${m.name} <span style="font-size:11px; color:var(--primary-color);">${m.pos}</span></div>
+                                <div style="font-size:11px; color:var(--text-muted);">${m.id}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="org-dept-header">
+                        <span><i class="fa-solid fa-building"></i> ${dName}</span>
+                        <span style="font-size:12px; opacity:0.8;">${depts[dName].length}명</span>
+                    </div>
+                    <div class="org-member-list">${membersHtml}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // RENDER DOCUMENTS
         function renderDocs() {
             const tbody = document.getElementById('docTbody');
             if(!tbody) return;
@@ -498,7 +562,6 @@
             });
         }
 
-        // NEW FORM (UNIQUE TIMESTAMP ID GENERATION TO PREVENT CONFLICT)
         function openNewForm() {
             showSection('sec-form');
             const now = new Date();
@@ -512,14 +575,17 @@
             document.getElementById('docAuthorText').innerText = currentUser ? `${currentUser.name} ${currentUser.pos}` : '기안자';
             document.getElementById('docDateText').innerText = today;
             document.getElementById('docTitleInput').value = '';
-            document.getElementById('docContentInput').value = '';
+            
+            const contentInput = document.getElementById('docContentInput');
+            if(contentInput) contentInput.value = '';
 
             document.getElementById('formActionArea').innerHTML = `<button class="btn btn-primary" onclick="submitDoc('${newId}')"><i class="fa-solid fa-paper-plane"></i> 결재 상신하기</button>`;
         }
 
         function submitDoc(docId) {
             const title = document.getElementById('docTitleInput').value.trim();
-            const content = document.getElementById('docContentInput').value.trim();
+            const contentInput = document.getElementById('docContentInput');
+            const content = contentInput ? contentInput.value.trim() : '';
 
             if(!title) return alert('문서 제목을 입력하세요.');
 
@@ -537,11 +603,11 @@
             docsData[docId] = doc;
             db.ref(`docs/${docId}`).set(doc)
                 .then(() => {
-                    alert('전자결재 문서가 성공적으로 상신되었습니다.');
+                    alert('전자결재 문서가 상신되었습니다.');
                     showSection('sec-approval');
                     renderDocs();
                 })
-                .catch(err => alert('문서 상신 실패: ' + err.message));
+                .catch(err => alert('상신 오류: ' + err.message));
         }
 
         function viewDocDetail(docId) {
@@ -554,7 +620,9 @@
             document.getElementById('docAuthorText').innerText = d.author;
             document.getElementById('docDateText').innerText = d.date;
             document.getElementById('docTitleInput').value = d.title;
-            document.getElementById('docContentInput').value = d.content || '';
+            
+            const contentInput = document.getElementById('docContentInput');
+            if(contentInput) contentInput.value = d.content || '';
 
             if(d.status === 'approved') {
                 document.getElementById('formActionArea').innerHTML = `<span class="badge-status badge-approved" style="font-size:13px; padding:6px 12px;">최종 승인 완료 문서</span>`;
@@ -568,11 +636,11 @@
                 docsData[docId].status = 'approved';
                 db.ref(`docs/${docId}/status`).set('approved')
                     .then(() => {
-                        alert('결재 문서 승인이 완료되었습니다.');
+                        alert('결재가 승인되었습니다.');
                         showSection('sec-approval');
                         renderDocs();
                     })
-                    .catch(err => alert('승인 실패: ' + err.message));
+                    .catch(err => alert('승인 오류: ' + err.message));
             }
         }
 
@@ -616,11 +684,12 @@
             usersData[id] = u;
             db.ref(`users/${id}`).set(u)
                 .then(() => {
-                    alert('새 사원이 등록되었습니다.');
+                    alert('신규 사원이 등록되었습니다.');
                     closeModal('memberModal');
                     renderMembers();
+                    renderOrgChart();
                 })
-                .catch(err => alert('등록 실패: ' + err.message));
+                .catch(err => alert('등록 오류: ' + err.message));
         }
 
         function updateDashboard() {
