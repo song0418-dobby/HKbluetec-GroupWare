@@ -162,11 +162,11 @@
             <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
                 <div class="form-group">
                     <label for="regId">아이디</label>
-                    <input type="text" id="regId" class="form-control" placeholder="영문/숫자 아이디" required>
+                    <input type="text" id="regId" class="form-control" placeholder="영문/숫자 아이디 입력" required>
                 </div>
                 <div class="form-group">
                     <label for="regPw">비밀번호</label>
-                    <input type="password" id="regPw" class="form-control" placeholder="비밀번호" required>
+                    <input type="password" id="regPw" class="form-control" placeholder="비밀번호 입력" required>
                 </div>
                 <div class="form-group">
                     <label for="regName">성명</label>
@@ -478,7 +478,7 @@
         }
         const db = firebase.database();
 
-        // 기본 고정 계정 데이터
+        // 고정 기본 계정
         const DEFAULT_USERS = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
@@ -489,15 +489,12 @@
         let globalDocs = {};
         let globalSchedules = {};
 
-        // 캘린더 연/월 제어
         let calCurrentYear = 2026;
         let calCurrentMonth = 6; // 0-indexed (6 = 7월)
 
-        // 내비게이션 및 세션 동기화
         function switchNavSection(secId, navElement = null) {
             showSection(secId);
             
-            // 상단 헤더 활성화 상태 업데이트
             document.querySelectorAll('.header-nav-item').forEach(i => i.classList.remove('active'));
             if (navElement) {
                 navElement.classList.add('active');
@@ -507,20 +504,18 @@
                 if (items[indexMap[secId]]) items[indexMap[secId]].classList.add('active');
             }
 
-            // 사이드바 활성화 상태 업데이트
             document.querySelectorAll('.nav-sidebar-item').forEach(i => i.classList.remove('active'));
             const sideMap = { 'sec-approval': 0, 'sec-schedule': 1, 'sec-org': 2, 'sec-members': 3 };
             const sideItems = document.querySelectorAll('.nav-sidebar-item');
             if (sideItems[sideMap[secId]]) sideItems[sideMap[secId]].classList.add('active');
 
-            // 섹션별 리렌더링
             if (secId === 'sec-approval') renderDocList();
             if (secId === 'sec-schedule') renderCalendar();
             if (secId === 'sec-org') renderOrgAll();
             if (secId === 'sec-members') renderMemberList();
         }
 
-        // 실시간 연동 리스너
+        // 실시간 동기화
         function initRealtimeSync() {
             const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
             if (savedSession) {
@@ -533,7 +528,7 @@
                 }
             }
 
-            // 1. 임직원 유저 데이터 수신
+            // 1. 유저 실시간 수신
             db.ref('groupware/users').on('value', (snapshot) => {
                 const data = snapshot.val() || {};
                 globalUsers = { ...DEFAULT_USERS, ...data };
@@ -543,14 +538,14 @@
                 updateBadges(); 
             });
 
-            // 2. 결재 문서 데이터 수신
+            // 2. 전자결재 실시간 수신
             db.ref('groupware/docs').on('value', (snapshot) => {
                 globalDocs = snapshot.val() || {};
                 renderDocList(); 
                 updateBadges();
             });
 
-            // 3. 일정 데이터 수신
+            // 3. 일정 캘린더 실시간 수신
             db.ref('groupware/schedules').on('value', (snapshot) => {
                 globalSchedules = snapshot.val() || {};
                 renderCalendar(); 
@@ -597,6 +592,7 @@
             switchNavSection('sec-approval');
         }
 
+        // 회원가입 보완 처리
         function handleRegister(e) {
             e.preventDefault();
 
@@ -621,6 +617,7 @@
 
             const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
 
+            // DB 저장 및 로컬 동시 반영
             db.ref(`groupware/users/${id}`).set(newUser).then(() => {
                 alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
                 document.getElementById('registerForm').reset();
@@ -970,7 +967,6 @@
             });
         }
 
-        // 캘린더 관련 계산
         function renderCalendar() {
             const grid = document.getElementById('calCellsGrid');
             if(!grid) return;
@@ -981,7 +977,6 @@
             const firstDay = new Date(calCurrentYear, calCurrentMonth, 1).getDay();
             const daysInMonth = new Date(calCurrentYear, calCurrentMonth + 1, 0).getDate();
 
-            // 이전 달 여백
             for (let i = 0; i < firstDay; i++) {
                 const emptyCell = document.createElement('div');
                 emptyCell.className = 'calendar-cell';
