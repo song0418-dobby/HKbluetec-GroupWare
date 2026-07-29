@@ -178,7 +178,7 @@
                     <label>부서</label>
                     <input type="text" id="regDept" class="form-control" placeholder="예: 경영기획팀, 영업팀" required>
                 </div>
-                <button type="submit" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">회원가입 신청</button>
+                <button type="submit" id="btnRegSubmit" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">회원가입 신청</button>
             </form>
         </div>
     </div>
@@ -187,7 +187,7 @@
     <header class="app-header">
         <a href="#" class="header-brand" onclick="setActiveNav(this); showSection('sec-home');">
             <i class="fa-solid fa-gem" style="color:#38bdf8;"></i> HK블루텍 GROUPWARE
-            <span class="sync-badge" id="syncStatusBadge"><i class="fa-solid fa-wifi"></i> 실시간 연동 중</span>
+            <span class="sync-badge" id="syncStatusBadge"><i class="fa-solid fa-wifi"></i> 실시간 공유 중</span>
         </a>
         <nav class="header-nav">
             <div class="header-nav-item active" onclick="setActiveNav(this); showSection('sec-home');">홈</div>
@@ -239,7 +239,7 @@
                 <h2 style="margin-bottom:20px;">대시보드</h2>
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px;">
                     <div class="card">
-                        <h3><i class="fa-solid fa-file-invoice"></i> 진행중인 전자결재</h3>
+                        <h3><i class="fa-solid fa-file-invoice"></i> 실시간 결재 문서</h3>
                         <p style="font-size:28px; font-weight:800; color:var(--warning-color); margin-top:10px;">
                             <span id="dashCount">0</span> 건
                         </p>
@@ -262,7 +262,7 @@
             <!-- APPROVAL LIST SECTION -->
             <section id="sec-approval" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>📑 전자결재 문서 목록</h2>
+                    <h2>📑 전자결재 문서 목록 (전사 실시간 공유)</h2>
                     <button class="btn btn-primary" onclick="openForm()"><i class="fa-solid fa-plus"></i> 기안 작성</button>
                 </div>
                 <div class="card">
@@ -275,7 +275,7 @@
                                 <th>제목</th>
                                 <th>기안자</th>
                                 <th>결재상태</th>
-                                <th>처리</th>
+                                <th>상세보기</th>
                             </tr>
                         </thead>
                         <tbody id="realDocTbody"></tbody>
@@ -308,7 +308,7 @@
                         <table class="doc-table">
                             <tr><th style="width:30%;">문서번호</th><td id="docNum">HK-6584</td></tr>
                             <tr><th>기안부서</th><td id="docDept">서비스관리팀</td></tr>
-                            <tr><th>기안일자</th><td id="docDate">2026-07-27</td></tr>
+                            <tr><th>기안일자</th><td id="docDate">2026-07-29</td></tr>
                         </table>
 
                         <table class="approval-line-table">
@@ -330,7 +330,7 @@
                             <tr>
                                 <td class="col-target"><span class="badge-status badge-approved">기안 완료</span></td>
                                 <td class="col-target" id="app1Stamp"><span class="badge-status badge-pending">대기</span></td>
-                                <td class="col-target" id="app2Stamp"><span class="badge-status badge-pending">대기</span></td>
+                                <td class="col-target" id="app2Stamp"><span class="badge-status badge-pending" id="finalStampBadge">대기</span></td>
                             </tr>
                         </table>
                     </div>
@@ -347,7 +347,7 @@
             <!-- SCHEDULE SECTION -->
             <section id="sec-schedule" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h2>📅 일정 관리 캘린더</h2>
+                    <h2>📅 일정 관리 캘린더 (전사 실시간 연동)</h2>
                     <button class="btn btn-primary" onclick="openScheduleModal()"><i class="fa-solid fa-calendar-plus"></i> 새 일정 추가</button>
                 </div>
                 <div class="card">
@@ -476,7 +476,7 @@
         }
         const db = firebase.database();
 
-        // 기본 내장 계정 (DB 초기 연결 실패 대비 백업용)
+        // 기본 내장 백업 계정
         const DEFAULT_USERS = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
@@ -487,7 +487,7 @@
         let globalDocs = {};
         let globalSchedules = {};
 
-        // 실시간 연동 및 초기 데이터 로드
+        // 실시간 무한 연동 (Firebase Realtime Database 리스너)
         function initRealtimeSync() {
             const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
             if (savedSession) {
@@ -500,7 +500,7 @@
                 }
             }
 
-            // 1. 유저 정보 실시간 반영
+            // 1. 유저 정보 실시간 반영 (누구든 회원가입하면 즉시 반영)
             db.ref('groupware/users').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data && Object.keys(data).length > 0) {
@@ -509,19 +509,24 @@
                     db.ref('groupware/users').update(DEFAULT_USERS);
                     globalUsers = {...DEFAULT_USERS};
                 }
-                renderMemberList(); renderOrgAll(); updateBadges(); populateUserSelects();
+                renderMemberList(); 
+                renderOrgAll(); 
+                updateBadges(); 
+                populateUserSelects();
             });
 
-            // 2. 전자결재 문서 실시간 반영
+            // 2. 전자결재 문서 전사 실시간 반영 (누구든 상신하면 모든 사람에게 화면 업데이트)
             db.ref('groupware/docs').on('value', (snapshot) => {
                 globalDocs = snapshot.val() || {};
-                renderDocList(); updateBadges();
+                renderDocList(); 
+                updateBadges();
             });
 
-            // 3. 캘린더 일정 실시간 반영
+            // 3. 캘린더 일정 실시간 공유
             db.ref('groupware/schedules').on('value', (snapshot) => {
                 globalSchedules = snapshot.val() || {};
-                renderCalendar(); updateBadges();
+                renderCalendar(); 
+                updateBadges();
             });
         }
 
@@ -538,7 +543,7 @@
             }
         }
 
-        // 로그인 처리 (즉시 연결 및 백업 동기화)
+        // 로그인 처리
         async function handleLogin(e) {
             e.preventDefault();
             const btn = document.getElementById('btnLoginSubmit');
@@ -551,7 +556,6 @@
             try {
                 let user = globalUsers[inputId];
 
-                // 메모리에 없을 경우 데이터베이스 실시간 재조회
                 if (!user) {
                     const snapshot = await db.ref(`groupware/users/${inputId}`).once('value');
                     user = snapshot.val();
@@ -567,7 +571,6 @@
                     return;
                 }
 
-                // 로그인 성공 처리
                 currentUser = user;
                 sessionStorage.setItem('HK_CURRENT_USER', JSON.stringify(currentUser));
                 document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
@@ -577,7 +580,6 @@
                 renderDocList();
 
             } catch (err) {
-                // DB 장애 상황 시 기본 계정 체크 fallback
                 if (DEFAULT_USERS[inputId] && String(DEFAULT_USERS[inputId].pw) === String(inputPw)) {
                     currentUser = DEFAULT_USERS[inputId];
                     sessionStorage.setItem('HK_CURRENT_USER', JSON.stringify(currentUser));
@@ -594,27 +596,42 @@
             }
         }
 
+        // 회원가입 신청 (즉시 실시간 DB 반영 및 바로 확인 가능)
         function handleRegister(e) {
             e.preventDefault();
+            const btn = document.getElementById('btnRegSubmit');
+            btn.disabled = true;
+            btn.innerText = '가입 등록 중...';
+
             const id = document.getElementById('regId').value.trim().toLowerCase();
             const pw = String(document.getElementById('regPw').value.trim());
             const name = document.getElementById('regName').value.trim();
             const pos = document.getElementById('regPos').value.trim();
             const dept = document.getElementById('regDept').value.trim();
 
-            if(globalUsers[id]) return alert('이미 존재하는 아이디입니다.');
+            if (globalUsers[id]) {
+                alert('이미 존재하는 아이디입니다.');
+                btn.disabled = false;
+                btn.innerText = '회원가입 신청';
+                return;
+            }
 
             const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
             
+            // Firebase DB에 실시간 등록
             db.ref(`groupware/users/${id}`).set(newUser)
                 .then(() => {
-                    alert('회원가입이 완료되었습니다! 바로 로그인해 주세요.');
+                    alert('회원가입이 성공적으로 완료되었습니다!\n별도의 승인 없이 바로 로그인하실 수 있습니다.');
                     document.getElementById('registerForm').reset();
                     switchAuthTab('login');
                     document.getElementById('loginId').value = id;
                 })
                 .catch((err) => {
                     alert('가입 실패: ' + err.message);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerText = '회원가입 신청';
                 });
         }
 
@@ -762,6 +779,7 @@
             if(document.getElementById('vacDays')) document.getElementById('vacDays').innerText = val + ' 일';
         }
 
+        // 전체 사용자가 작성된 결재문서를 볼 수 있도록 렌더링
         function renderDocList() {
             const tbody = document.getElementById('realDocTbody');
             if(!tbody) return;
@@ -773,19 +791,20 @@
                 return;
             }
 
+            // 최신 작성 문서가 위에 오도록 정렬
             docsList.reverse().forEach(d => {
                 const tr = document.createElement('tr');
-                let badgeHtml = '<span class="badge-status badge-pending">대기중</span>';
+                let badgeHtml = '<span class="badge-status badge-pending">결재 대기</span>';
                 if (d.status === 'approved') badgeHtml = '<span class="badge-status badge-approved">최종 승인</span>';
 
                 tr.innerHTML = `
                     <td><strong>${d.id}</strong></td>
                     <td><span class="badge-status" style="background:#f1f5f9;">${d.formType}</span></td>
                     <td>${d.date}</td>
-                    <td>${d.title}</td>
+                    <td><strong>${d.title}</strong></td>
                     <td>${d.author}</td>
                     <td>${badgeHtml}</td>
-                    <td><button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="viewDetail('${d.id}')">보기</button></td>
+                    <td><button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="viewDetail('${d.id}')"><i class="fa-solid fa-eye"></i> 열람/결재</button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -799,6 +818,8 @@
             document.getElementById('docDept').innerText = currentUser ? currentUser.dept : '서비스관리팀';
             document.getElementById('docDate').innerText = today;
             document.getElementById('app0Box').innerText = currentUser ? `${currentUser.name} ${currentUser.pos}` : '작성자';
+            document.getElementById('finalStampBadge').className = "badge-status badge-pending";
+            document.getElementById('finalStampBadge').innerText = "대기";
 
             populateUserSelects();
             changeFormType(document.getElementById('formTypeSelect').value);
@@ -818,6 +839,7 @@
             });
         }
 
+        // 실시간 전사 공유 문서 저장
         function submitNewDoc(docId) {
             const title = document.getElementById('docTitleInput').value;
             if(!title) return alert('문서 제목을 입력해 주세요!');
@@ -834,7 +856,7 @@
 
             db.ref(`groupware/docs/${docId}`).set(docData)
                 .then(() => {
-                    alert('전자결재가 실시간 상신되었습니다!');
+                    alert('전자결재가 전사 실시간으로 상신되었습니다!\n다른 모든 직원들의 화면에도 즉시 공개됩니다.');
                     showSection('sec-approval');
                 })
                 .catch(err => alert('상신 오류: ' + err.message));
@@ -844,19 +866,29 @@
             showSection('sec-form');
             const d = globalDocs[docId];
             if(!d) return;
+            
             document.getElementById('docNum').innerText = d.id;
             document.getElementById('docDept').innerText = d.dept;
             document.getElementById('docDate').innerText = d.date;
             document.getElementById('docTitleInput').value = d.title;
             document.getElementById('app0Box').innerText = d.author;
 
-            document.getElementById('actionArea').innerHTML = `<button class="btn btn-success" onclick="approveDoc('${d.id}')"><i class="fa-solid fa-check"></i> 즉시 승인 처리</button>`;
+            if (d.status === 'approved') {
+                document.getElementById('finalStampBadge').className = "badge-status badge-approved";
+                document.getElementById('finalStampBadge').innerText = "승인 완료";
+                document.getElementById('actionArea').innerHTML = `<span class="badge-status badge-approved" style="font-size:14px; padding:6px 12px;"><i class="fa-solid fa-circle-check"></i> 최종 승인 완료된 문서입니다</span>`;
+            } else {
+                document.getElementById('finalStampBadge').className = "badge-status badge-pending";
+                document.getElementById('finalStampBadge').innerText = "대기";
+                document.getElementById('actionArea').innerHTML = `<button class="btn btn-success" onclick="approveDoc('${d.id}')"><i class="fa-solid fa-check"></i> 즉시 승인 처리</button>`;
+            }
         }
 
+        // 승인 처리 시 전사 실시간 상태 업데이트
         function approveDoc(docId) {
             db.ref(`groupware/docs/${docId}`).update({ status: 'approved' })
                 .then(() => {
-                    alert('실시간 승인 처리가 완료되었습니다.');
+                    alert('실시간 승인 완료되었습니다!');
                     showSection('sec-approval');
                 })
                 .catch(err => alert('승인 오류: ' + err.message));
@@ -938,7 +970,7 @@
             const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
             db.ref(`groupware/users/${id}`).set(u)
                 .then(() => {
-                    alert('임직원 정보가 실시간 저장되었습니다.');
+                    alert('임직원 정보가 실시간 반영 및 저장되었습니다.');
                     closeModal('userModal');
                 })
                 .catch(err => alert('저장 실패: ' + err.message));
@@ -949,7 +981,6 @@
             if(!grid) return;
             grid.innerHTML = '';
             
-            // 등록된 일정 목록
             const schedulesList = Object.values(globalSchedules);
 
             for(let i = 1; i <= 31; i++) {
@@ -963,7 +994,7 @@
 
                 let schHtml = '';
                 daySchedules.forEach(s => {
-                    schHtml += `<div style="background:#e0f2fe; color:#0284c7; font-size:10px; padding:2px; border-radius:3px; margin-top:2px; font-weight:700; truncate">${s.title}</div>`;
+                    schHtml += `<div style="background:#e0f2fe; color:#0284c7; font-size:10px; padding:2px; border-radius:3px; margin-top:2px; font-weight:700;">${s.title}</div>`;
                 });
 
                 cell.innerHTML = `<div class="calendar-date-num">${i}</div>${schHtml}`;
@@ -999,7 +1030,7 @@
             if(document.getElementById('dashMemCount')) document.getElementById('dashMemCount').innerText = Object.keys(globalUsers).length;
         }
 
-        // 페이지 로드 시 실시간 연동 시작
+        // 초기화 실행
         window.onload = initRealtimeSync;
     </script>
 </body>
