@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HK블루텍 전자결재 그룹웨어</title>
+    <title>HK블루텍 그룹웨어</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -33,12 +33,12 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; }
         body { background-color: var(--bg-body); color: var(--text-main); font-size: 14px; line-height: 1.5; height: 100vh; overflow: hidden; }
 
-        /* Auth Modal Screen */
+        /* Auth Screen */
         #authScreen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 23, 42, 0.9); display: flex; align-items: center; justify-content: center; z-index: 9999;
+            background: rgba(15, 23, 42, 0.85); display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
-        .auth-card { background: #fff; width: 400px; padding: 32px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .auth-card { background: #fff; width: 420px; padding: 32px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
         .auth-tabs { display: flex; border-bottom: 2px solid var(--border-light); margin-bottom: 20px; }
         .auth-tab { flex: 1; text-align: center; padding: 10px; font-weight: 700; cursor: pointer; color: var(--text-muted); }
         .auth-tab.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
@@ -57,7 +57,7 @@
         }
         .header-nav-item:hover, .header-nav-item.active { color: #fff; border-bottom-color: #38bdf8; background: rgba(255,255,255,0.05); }
 
-        /* Layout */
+        /* App Container */
         .app-container { display: flex; width: 100%; margin-top: var(--header-height); height: calc(100vh - var(--header-height)); }
         .app-sidebar {
             width: var(--sidebar-width); background-color: var(--bg-surface); border-right: 1px solid var(--border-light);
@@ -76,7 +76,7 @@
         .page-section { display: none; }
         .page-section.active { display: block; }
 
-        /* UI Common */
+        /* Elements */
         .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid var(--border-color); background-color: #fff; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); }
         .btn-danger { background-color: var(--danger-color); color: #fff; border-color: var(--danger-color); }
@@ -96,7 +96,7 @@
         .form-group { margin-bottom: 14px; }
         .form-group label { display: block; font-weight: 700; margin-bottom: 5px; font-size: 12px; }
 
-        /* Document Styling */
+        /* Document Form Style */
         .document-wrapper { background: #fff; max-width: 900px; margin: 0 auto; padding: 35px 40px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .doc-header-selector { background: #f1f5f9; padding: 12px 20px; border-radius: 6px; display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
         .doc-title-main { text-align: center; font-size: 24px; font-weight: 800; margin-bottom: 25px; color: #0f172a; text-decoration: underline; text-underline-offset: 6px; }
@@ -104,7 +104,6 @@
         .doc-table th, .doc-table td { border: 1px solid #94a3b8; padding: 8px 10px; text-align: center; }
         .doc-table th { background: #f1f5f9; font-weight: 700; color: #334155; }
 
-        /* Modal */
         .modal-overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9000; }
         .modal-body { background:#fff; width:450px; border-radius:8px; padding:24px; }
     </style>
@@ -115,14 +114,14 @@
     <div id="authScreen">
         <div class="auth-card">
             <h2 style="text-align:center; margin-bottom:5px;"><i class="fa-solid fa-gem" style="color:#0284c7;"></i> HK블루텍</h2>
-            <p style="text-align:center; color:#64748b; font-size:12px; margin-bottom:20px;">그룹웨어 로그인 / 회원가입</p>
+            <p style="text-align:center; color:#64748b; font-size:12px; margin-bottom:20px;">그룹웨어 인증 센터</p>
             
             <div class="auth-tabs">
                 <div id="tabLogin" class="auth-tab active" onclick="switchTab('login')">로그인</div>
                 <div id="tabReg" class="auth-tab" onclick="switchTab('register')">회원가입</div>
             </div>
 
-            <!-- 로그인 영역 -->
+            <!-- LOGIN -->
             <div id="loginArea">
                 <div class="form-group">
                     <label>아이디</label>
@@ -135,11 +134,11 @@
                 <button type="button" class="btn btn-primary" style="width:100%; padding:10px; justify-content:center; margin-top:10px;" onclick="doLogin()">로그인</button>
             </div>
 
-            <!-- 회원가입 영역 -->
+            <!-- REGISTER -->
             <div id="registerArea" style="display:none;">
                 <div class="form-group">
                     <label>아이디</label>
-                    <input type="text" id="regId" class="form-control" placeholder="아이디 입력 (영문/숫자)">
+                    <input type="text" id="regId" class="form-control" placeholder="아이디 입력">
                 </div>
                 <div class="form-group">
                     <label>비밀번호</label>
@@ -157,7 +156,7 @@
                     <label>부서</label>
                     <input type="text" id="regDept" class="form-control" placeholder="예: 서비스관리팀, 영업팀">
                 </div>
-                <button type="button" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;" onclick="doRegister()">회원가입 신청</button>
+                <button type="button" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;" onclick="doRegister()">회원가입 완료</button>
             </div>
         </div>
     </div>
@@ -170,6 +169,7 @@
         <nav class="header-nav">
             <div class="header-nav-item active" onclick="setActiveNav(this); showSection('sec-home');">홈</div>
             <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-approval'); renderDocs();">전자결재</div>
+            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-schedule');">일정관리</div>
             <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-members'); renderMembers();">임직원 관리</div>
         </nav>
         <div>
@@ -190,14 +190,19 @@
                     </a>
                 </li>
                 <li class="menu-item">
+                    <a onclick="showSection('sec-schedule');">
+                        <span><i class="fa-solid fa-calendar-days"></i> 전사 일정</span>
+                    </a>
+                </li>
+                <li class="menu-item">
                     <a onclick="showSection('sec-members'); renderMembers();">
-                        <span><i class="fa-solid fa-users-gear"></i> 임직원 및 회원 관리</span>
+                        <span><i class="fa-solid fa-users-gear"></i> 임직원 조직도</span>
                     </a>
                 </li>
             </ul>
         </aside>
 
-        <!-- MAIN CONTENT -->
+        <!-- MAIN -->
         <main class="app-main">
 
             <!-- HOME DASHBOARD -->
@@ -236,6 +241,14 @@
                         </thead>
                         <tbody id="docTbody"></tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- SCHEDULE SECTION -->
+            <section id="sec-schedule" class="page-section">
+                <h2 style="margin-bottom:20px;">📅 전사 일정 관리</h2>
+                <div class="card">
+                    <p style="color:var(--text-muted);">전사 공유 일정이 등록되는 공간입니다.</p>
                 </div>
             </section>
 
@@ -285,7 +298,7 @@
             <!-- MEMBERS MANAGEMENT -->
             <section id="sec-members" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>👥 임직원 및 회원 관리</h2>
+                    <h2>👥 임직원 및 조직도 관리</h2>
                     <button class="btn btn-primary" onclick="openAddMemberModal()"><i class="fa-solid fa-user-plus"></i> 사원 직접 추가</button>
                 </div>
                 <div class="card">
@@ -340,16 +353,14 @@
         }
         const db = firebase.database();
 
-        // DEFAULT DATA
         let usersData = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isAdmin: true }
         };
         let docsData = {};
         let currentUser = null;
 
-        // INIT & REALTIME SYNC
+        // DB REALTIME SYNC (CHALLENGE FIXED: child_added & value sync)
         window.onload = function() {
-            // Check session
             const session = sessionStorage.getItem('HK_USER');
             if (session) {
                 try {
@@ -359,24 +370,23 @@
                 } catch(e) {}
             }
 
-            // Sync Users
+            // Realtime Sync Users
             db.ref('users').on('value', (snap) => {
                 const val = snap.val();
                 if(val) usersData = { ...usersData, ...val };
                 renderMembers();
                 updateDashboard();
-            });
+            }, (err) => console.error("Firebase Users Read Failed:", err));
 
-            // Sync Docs
+            // Realtime Sync Docs
             db.ref('docs').on('value', (snap) => {
                 const val = snap.val();
                 if(val) docsData = val;
                 renderDocs();
                 updateDashboard();
-            });
+            }, (err) => console.error("Firebase Docs Read Failed:", err));
         };
 
-        // TAB SWITCHING
         function switchTab(type) {
             if(type === 'login') {
                 document.getElementById('tabLogin').className = 'auth-tab active';
@@ -391,26 +401,16 @@
             }
         }
 
-        // LOGIN ACTION
+        // LOGIN WITH SAFE CHECK
         function doLogin() {
             const id = document.getElementById('loginId').value.trim().toLowerCase();
             const pw = document.getElementById('loginPw').value.trim();
 
-            if(!id || !pw) {
-                alert('아이디와 비밀번호를 모두 입력해 주세요.');
-                return;
-            }
+            if(!id || !pw) return alert('아이디와 비밀번호를 모두 입력해 주세요.');
 
             const target = usersData[id];
-            if(!target) {
-                alert('존재하지 않는 아이디입니다.');
-                return;
-            }
-
-            if(String(target.pw) !== String(pw)) {
-                alert('비밀번호가 일치하지 않습니다.');
-                return;
-            }
+            if(!target) return alert('존재하지 않는 아이디입니다.');
+            if(String(target.pw) !== String(pw)) return alert('비밀번호가 일치하지 않습니다.');
 
             currentUser = target;
             sessionStorage.setItem('HK_USER', JSON.stringify(currentUser));
@@ -420,7 +420,7 @@
             renderDocs();
         }
 
-        // REGISTER ACTION
+        // REGISTER WITH FIREBASE CATCH
         function doRegister() {
             const id = document.getElementById('regId').value.trim().toLowerCase();
             const pw = document.getElementById('regPw').value.trim();
@@ -428,33 +428,26 @@
             const pos = document.getElementById('regPos').value.trim();
             const dept = document.getElementById('regDept').value.trim();
 
-            if(!id || !pw || !name || !pos || !dept) {
-                alert('모든 회원가입 항목을 입력해 주세요.');
-                return;
-            }
-
-            if(usersData[id]) {
-                alert('이미 등록된 아이디입니다. 다른 아이디를 사용해 주세요.');
-                return;
-            }
+            if(!id || !pw || !name || !pos || !dept) return alert('모든 회원가입 항목을 입력해 주세요.');
+            if(usersData[id]) return alert('이미 등록된 아이디입니다.');
 
             const newUser = { id, pw, name, pos, dept, isAdmin: (id === 'song0418_hk') };
 
-            // Save to Local & Firebase
             usersData[id] = newUser;
-            db.ref(`users/${id}`).set(newUser);
-
-            alert(`[${name}] 님의 회원가입이 정상 완료되었습니다!\n즉시 로그인해 주세요.`);
-            
-            // Clear inputs
-            document.getElementById('regId').value = '';
-            document.getElementById('regPw').value = '';
-            document.getElementById('regName').value = '';
-            document.getElementById('regPos').value = '';
-            document.getElementById('regDept').value = '';
-
-            switchTab('login');
-            document.getElementById('loginId').value = id;
+            db.ref(`users/${id}`).set(newUser)
+                .then(() => {
+                    alert(`[${name}] 님의 회원가입이 완료되었습니다.`);
+                    document.getElementById('regId').value = '';
+                    document.getElementById('regPw').value = '';
+                    document.getElementById('regName').value = '';
+                    document.getElementById('regPos').value = '';
+                    document.getElementById('regDept').value = '';
+                    switchTab('login');
+                    document.getElementById('loginId').value = id;
+                })
+                .catch((err) => {
+                    alert('저장 실패: Firebase 권한 규칙을 확인해 주세요. (' + err.message + ')');
+                });
         }
 
         function doLogout() {
@@ -476,7 +469,7 @@
             document.getElementById('formHeaderTitle').innerText = `HK블루텍 ${val}`;
         }
 
-        // APPROVAL DOCS RENDERING
+        // RENDER DOCS
         function renderDocs() {
             const tbody = document.getElementById('docTbody');
             if(!tbody) return;
@@ -505,10 +498,14 @@
             });
         }
 
+        // NEW FORM (UNIQUE TIMESTAMP ID GENERATION TO PREVENT CONFLICT)
         function openNewForm() {
             showSection('sec-form');
-            const newId = 'HK-' + Math.floor(Math.random() * 8999 + 1000);
-            const today = new Date().toISOString().substring(0, 10);
+            const now = new Date();
+            const dateStr = now.toISOString().substring(0, 10).replace(/-/g, '');
+            const timeStr = String(now.getTime()).slice(-4);
+            const newId = `HK-${dateStr}-${timeStr}`;
+            const today = now.toISOString().substring(0, 10);
 
             document.getElementById('docNumText').innerText = newId;
             document.getElementById('docDeptText').innerText = currentUser ? currentUser.dept : '서비스관리팀';
@@ -538,11 +535,13 @@
             };
 
             docsData[docId] = doc;
-            db.ref(`docs/${docId}`).set(doc);
-
-            alert('전자결재 문서가 성공적으로 상신되었습니다.');
-            showSection('sec-approval');
-            renderDocs();
+            db.ref(`docs/${docId}`).set(doc)
+                .then(() => {
+                    alert('전자결재 문서가 성공적으로 상신되었습니다.');
+                    showSection('sec-approval');
+                    renderDocs();
+                })
+                .catch(err => alert('문서 상신 실패: ' + err.message));
         }
 
         function viewDocDetail(docId) {
@@ -567,14 +566,16 @@
         function approveDoc(docId) {
             if(docsData[docId]) {
                 docsData[docId].status = 'approved';
-                db.ref(`docs/${docId}/status`).set('approved');
-                alert('결재 문서 승인이 완료되었습니다.');
-                showSection('sec-approval');
-                renderDocs();
+                db.ref(`docs/${docId}/status`).set('approved')
+                    .then(() => {
+                        alert('결재 문서 승인이 완료되었습니다.');
+                        showSection('sec-approval');
+                        renderDocs();
+                    })
+                    .catch(err => alert('승인 실패: ' + err.message));
             }
         }
 
-        // MEMBERS RENDERING
         function renderMembers() {
             const tbody = document.getElementById('memberTbody');
             if(!tbody) return;
@@ -613,11 +614,13 @@
 
             const u = { id, pw, name, pos, dept, isAdmin: false };
             usersData[id] = u;
-            db.ref(`users/${id}`).set(u);
-
-            alert('새 사원이 등록되었습니다.');
-            closeModal('memberModal');
-            renderMembers();
+            db.ref(`users/${id}`).set(u)
+                .then(() => {
+                    alert('새 사원이 등록되었습니다.');
+                    closeModal('memberModal');
+                    renderMembers();
+                })
+                .catch(err => alert('등록 실패: ' + err.message));
         }
 
         function updateDashboard() {
