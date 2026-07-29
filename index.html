@@ -534,8 +534,8 @@
             }
         }
 
-        // 로그인 검증 로직 개편 (DB 직접 조회로 안전성 강화)
-        async function handleLogin(e) {
+        // 로그인 검증 개편: 실시간 수신된 globalUsers 메모리 검증 방식 (멈춤 현상 완벽 해결)
+        function handleLogin(e) {
             e.preventDefault();
             const btn = document.getElementById('btnLoginSubmit');
             btn.disabled = true;
@@ -544,40 +544,37 @@
             const inputId = document.getElementById('loginId').value.trim().toLowerCase();
             const inputPw = document.getElementById('loginPw').value.trim();
 
-            try {
-                // DB에서 실시간 검증
-                const snapshot = await db.ref(`groupware/users/${inputId}`).once('value');
-                const user = snapshot.val();
+            setTimeout(() => {
+                try {
+                    // 메모리에 실시간 동기화된 회원목록에서 비교
+                    const user = globalUsers[inputId];
 
-                if (!user) {
-                    alert('존재하지 않는 아이디입니다.');
+                    if (!user) {
+                        alert('존재하지 않는 아이디입니다.');
+                        return;
+                    }
+
+                    // 비밀번호 문자열 비교
+                    if (String(user.pw) !== String(inputPw)) {
+                        alert('비밀번호가 올바르지 않습니다.');
+                        return;
+                    }
+
+                    // 로그인 성공
+                    currentUser = user;
+                    sessionStorage.setItem('HK_CURRENT_USER', JSON.stringify(currentUser));
+                    document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
+                    document.getElementById('authScreen').style.display = 'none';
+                    showSection('sec-approval');
+                    renderDocList();
+
+                } catch (err) {
+                    alert('로그인 처리 중 오류 발생: ' + err.message);
+                } finally {
                     btn.disabled = false;
                     btn.innerText = '로그인';
-                    return;
                 }
-
-                // 비밀번호 형변환 후 대조 (숫자/문자열 타입 문제 해결)
-                if (String(user.pw) !== String(inputPw)) {
-                    alert('비밀번호가 올바르지 않습니다.');
-                    btn.disabled = false;
-                    btn.innerText = '로그인';
-                    return;
-                }
-
-                // 로그인 성공
-                currentUser = user;
-                sessionStorage.setItem('HK_CURRENT_USER', JSON.stringify(currentUser));
-                document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
-                document.getElementById('authScreen').style.display = 'none';
-                showSection('sec-approval');
-                renderDocList();
-
-            } catch (err) {
-                alert('로그인 처리 중 오류 발생: ' + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = '로그인';
-            }
+            }, 150);
         }
 
         function handleRegister(e) {
