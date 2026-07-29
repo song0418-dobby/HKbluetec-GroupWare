@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (Compat v9) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -49,7 +49,7 @@
             background-color: #0f172a; color: #fff; display: flex; align-items: center;
             justify-content: space-between; padding: 0 20px; z-index: 1000;
         }
-        .header-brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; }
+        .header-brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; cursor: pointer; }
         .header-nav { display: flex; gap: 4px; height: 100%; }
         .header-nav-item {
             padding: 0 16px; height: 100%; display: flex; align-items: center; gap: 8px;
@@ -67,6 +67,7 @@
             margin: 0 16px 20px; padding: 12px; background-color: var(--primary-color); color: #fff; border: none;
             border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
+        .btn-new-doc:hover { background-color: var(--primary-hover); }
 
         .menu-list { list-style: none; }
         .menu-item a { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; color: var(--secondary-color); text-decoration: none; font-weight: 600; cursor: pointer; }
@@ -79,6 +80,7 @@
         /* Basic UI components */
         .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid var(--border-color); background-color: #fff; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .btn-primary:hover { background-color: var(--primary-hover); }
         .btn-danger { background-color: var(--danger-color); color: #fff; border-color: var(--danger-color); }
         .btn-success { background-color: var(--success-color); color: #fff; border-color: var(--success-color); }
 
@@ -126,7 +128,7 @@
 
         /* Modals */
         .modal-overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9000; }
-        .modal-body { background:#fff; width:480px; border-radius:8px; padding:24px; }
+        .modal-body { background:#fff; width:480px; border-radius:8px; padding:24px; max-height: 90vh; overflow-y: auto; }
         .form-group { margin-bottom: 12px; }
         .form-group label { display:block; font-weight:700; margin-bottom:4px; font-size:12px; }
         .sync-badge { background: #16a34a; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; }
@@ -147,11 +149,11 @@
 
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label>아이디</label>
+                    <label for="loginId">아이디</label>
                     <input type="text" id="loginId" class="form-control" placeholder="아이디 입력 (예: song0418_hk)" required>
                 </div>
                 <div class="form-group">
-                    <label>비밀번호</label>
+                    <label for="loginPw">비밀번호</label>
                     <input type="password" id="loginPw" class="form-control" placeholder="비밀번호 입력" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">로그인</button>
@@ -159,23 +161,23 @@
 
             <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
                 <div class="form-group">
-                    <label>아이디</label>
+                    <label for="regId">아이디</label>
                     <input type="text" id="regId" class="form-control" placeholder="영문/숫자 아이디" required>
                 </div>
                 <div class="form-group">
-                    <label>비밀번호</label>
+                    <label for="regPw">비밀번호</label>
                     <input type="password" id="regPw" class="form-control" placeholder="비밀번호" required>
                 </div>
                 <div class="form-group">
-                    <label>성명</label>
+                    <label for="regName">성명</label>
                     <input type="text" id="regName" class="form-control" placeholder="성함 입력" required>
                 </div>
                 <div class="form-group">
-                    <label>직급</label>
+                    <label for="regPos">직급</label>
                     <input type="text" id="regPos" class="form-control" placeholder="예: 대리, 과장, 부장" required>
                 </div>
                 <div class="form-group">
-                    <label>부서</label>
+                    <label for="regDept">부서</label>
                     <input type="text" id="regDept" class="form-control" placeholder="예: 서비스관리팀, 영업팀" required>
                 </div>
                 <button type="submit" class="btn btn-success" style="width:100%; padding:10px; justify-content:center; margin-top:10px;">회원가입 신청</button>
@@ -185,16 +187,16 @@
 
     <!-- APP HEADER -->
     <header class="app-header">
-        <a href="#" class="header-brand" onclick="setActiveNav(this); showSection('sec-home');">
+        <a class="header-brand" onclick="switchNavSection('sec-home', this);">
             <i class="fa-solid fa-gem" style="color:#38bdf8;"></i> HK블루텍 GROUPWARE
             <span class="sync-badge"><i class="fa-solid fa-wifi"></i> 실시간 연동 중</span>
         </a>
         <nav class="header-nav">
-            <div class="header-nav-item active" onclick="setActiveNav(this); showSection('sec-home');">홈</div>
-            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-approval'); renderDocList();">전자결재</div>
-            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-schedule'); renderCalendar();">일정 캘린더</div>
-            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-org'); renderOrgAll();">조직도 관리</div>
-            <div class="header-nav-item" onclick="setActiveNav(this); showSection('sec-members'); renderMemberList();">회원 관리</div>
+            <div class="header-nav-item active" onclick="switchNavSection('sec-home', this);">홈</div>
+            <div class="header-nav-item" onclick="switchNavSection('sec-approval', this);">전자결재</div>
+            <div class="header-nav-item" onclick="switchNavSection('sec-schedule', this);">일정 캘린더</div>
+            <div class="header-nav-item" onclick="switchNavSection('sec-org', this);">조직도 관리</div>
+            <div class="header-nav-item" onclick="switchNavSection('sec-members', this);">회원 관리</div>
         </nav>
         <div>
             <span id="currentUserInfo" style="font-weight:700; color:#fff; margin-right:15px;">-</span>
@@ -207,24 +209,24 @@
         <aside class="app-sidebar">
             <button class="btn-new-doc" onclick="openForm()"><i class="fa-solid fa-pen-to-square"></i> 새 결재 작성</button>
             <ul class="menu-list">
-                <li class="menu-item active">
-                    <a onclick="showSection('sec-approval'); renderDocList();">
+                <li class="menu-item nav-sidebar-item active">
+                    <a onclick="switchNavSection('sec-approval');">
                         <span><i class="fa-solid fa-inbox"></i> 전자결재함</span>
                         <span class="badge-status badge-pending" id="cntBadge">0</span>
                     </a>
                 </li>
-                <li class="menu-item">
-                    <a onclick="showSection('sec-schedule'); renderCalendar();">
+                <li class="menu-item nav-sidebar-item">
+                    <a onclick="switchNavSection('sec-schedule');">
                         <span><i class="fa-solid fa-calendar-days"></i> 일정 캘린더</span>
                     </a>
                 </li>
-                <li class="menu-item">
-                    <a onclick="showSection('sec-org'); renderOrgAll();">
+                <li class="menu-item nav-sidebar-item">
+                    <a onclick="switchNavSection('sec-org');">
                         <span><i class="fa-solid fa-sitemap"></i> 임직원 조직도</span>
                     </a>
                 </li>
-                <li class="menu-item">
-                    <a onclick="showSection('sec-members'); renderMemberList();">
+                <li class="menu-item nav-sidebar-item">
+                    <a onclick="switchNavSection('sec-members');">
                         <span><i class="fa-solid fa-users-gear"></i> 회원 및 권한 관리</span>
                     </a>
                 </li>
@@ -237,7 +239,7 @@
             <!-- DASHBOARD -->
             <section id="sec-home" class="page-section active">
                 <h2 style="margin-bottom:20px;">대시보드</h2>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:20px;">
                     <div class="card">
                         <h3><i class="fa-solid fa-file-invoice"></i> 실시간 결재 문서</h3>
                         <p style="font-size:28px; font-weight:800; color:var(--warning-color); margin-top:10px;">
@@ -285,14 +287,14 @@
 
             <!-- APPROVAL FORM CREATION AND VIEW -->
             <section id="sec-form" class="page-section">
-                <div style="margin-bottom:20px; display:flex; justify-content:space-between;">
+                <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
                     <button class="btn" onclick="showSection('sec-approval'); renderDocList();"><i class="fa-solid fa-arrow-left"></i> 목록으로</button>
                     <div id="actionArea"></div>
                 </div>
 
                 <div class="document-wrapper">
                     <div class="doc-header-selector" id="formSelectorArea">
-                        <label><i class="fa-solid fa-file-signature" style="color:var(--primary-color);"></i> 결재 양식 선택:</label>
+                        <label for="formTypeSelect"><i class="fa-solid fa-file-signature" style="color:var(--primary-color);"></i> 결재 양식 선택:</label>
                         <select id="formTypeSelect" class="form-control" style="width:250px; font-weight:700;" onchange="changeFormType(this.value)">
                             <option value="구매 품의서">🛒 구매 품의서</option>
                             <option value="지출 품의서">💰 지출 품의서</option>
@@ -304,7 +306,7 @@
 
                     <h1 class="doc-title-main" id="formTitleHeader">HK블루텍 구매품의서</h1>
                     
-                    <div style="display:grid; grid-template-columns: 1fr 1.3fr; gap:20px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1.3fr; gap:20px; margin-bottom:20px;">
                         <table class="doc-table">
                             <tr><th style="width:30%;">문서번호</th><td id="docNum">HK-6584</td></tr>
                             <tr><th>기안부서</th><td id="docDept">서비스관리팀</td></tr>
@@ -336,7 +338,7 @@
                     </div>
 
                     <div style="margin-bottom:15px;">
-                        <label style="font-weight:700; display:block; margin-bottom:5px;">문서 제목</label>
+                        <label for="docTitleInput" style="font-weight:700; display:block; margin-bottom:5px;">문서 제목</label>
                         <input type="text" id="docTitleInput" class="form-control" placeholder="문서 제목을 입력하세요.">
                     </div>
 
@@ -434,9 +436,9 @@
     <div id="schModal" class="modal-overlay">
         <div class="modal-body">
             <h3 style="margin-bottom:15px;">새 일정 등록</h3>
-            <div class="form-group"><label>일정 제목</label><input type="text" id="schTitle" class="form-control" placeholder="예: 주간 회의"></div>
-            <div class="form-group"><label>날짜</label><input type="date" id="schDate" class="form-control"></div>
-            <div class="form-group"><label>시간</label><input type="time" id="schTime" class="form-control" value="10:00"></div>
+            <div class="form-group"><label for="schTitle">일정 제목</label><input type="text" id="schTitle" class="form-control" placeholder="예: 주간 회의"></div>
+            <div class="form-group"><label for="schDate">날짜</label><input type="date" id="schDate" class="form-control"></div>
+            <div class="form-group"><label for="schTime">시간</label><input type="time" id="schTime" class="form-control" value="10:00"></div>
             <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
                 <button class="btn" onclick="closeModal('schModal')">취소</button>
                 <button class="btn btn-primary" onclick="saveSchedule()">저장하기</button>
@@ -447,11 +449,11 @@
     <div id="userModal" class="modal-overlay">
         <div class="modal-body">
             <h3 style="margin-bottom:15px;">임직원 정보 등록/수정</h3>
-            <div class="form-group"><label>아이디</label><input type="text" id="userIdInput" class="form-control"></div>
-            <div class="form-group"><label>비밀번호</label><input type="password" id="userPwInput" class="form-control" value="1234"></div>
-            <div class="form-group"><label>성명</label><input type="text" id="userName" class="form-control"></div>
-            <div class="form-group"><label>직급</label><input type="text" id="userPos" class="form-control"></div>
-            <div class="form-group"><label>부서</label><input type="text" id="userDept" class="form-control"></div>
+            <div class="form-group"><label for="userIdInput">아이디</label><input type="text" id="userIdInput" class="form-control"></div>
+            <div class="form-group"><label for="userPwInput">비밀번호</label><input type="password" id="userPwInput" class="form-control" value="1234"></div>
+            <div class="form-group"><label for="userName">성명</label><input type="text" id="userName" class="form-control"></div>
+            <div class="form-group"><label for="userPos">직급</label><input type="text" id="userPos" class="form-control"></div>
+            <div class="form-group"><label for="userDept">부서</label><input type="text" id="userDept" class="form-control"></div>
             <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
                 <button class="btn" onclick="closeModal('userModal')">취소</button>
                 <button class="btn btn-primary" onclick="saveUser()">저장하기</button>
@@ -487,9 +489,39 @@
         let globalDocs = {};
         let globalSchedules = {};
 
-        // 실시간 무한 연동 (Firebase Realtime Database 리스너)
+        // 캘린더 연/월 제어
+        let calCurrentYear = 2026;
+        let calCurrentMonth = 6; // 0-indexed (6 = 7월)
+
+        // 내비게이션 및 세션 동기화
+        function switchNavSection(secId, navElement = null) {
+            showSection(secId);
+            
+            // 상단 헤더 활성화 상태 업데이트
+            document.querySelectorAll('.header-nav-item').forEach(i => i.classList.remove('active'));
+            if (navElement) {
+                navElement.classList.add('active');
+            } else {
+                const indexMap = { 'sec-home': 0, 'sec-approval': 1, 'sec-schedule': 2, 'sec-org': 3, 'sec-members': 4 };
+                const items = document.querySelectorAll('.header-nav-item');
+                if (items[indexMap[secId]]) items[indexMap[secId]].classList.add('active');
+            }
+
+            // 사이드바 활성화 상태 업데이트
+            document.querySelectorAll('.nav-sidebar-item').forEach(i => i.classList.remove('active'));
+            const sideMap = { 'sec-approval': 0, 'sec-schedule': 1, 'sec-org': 2, 'sec-members': 3 };
+            const sideItems = document.querySelectorAll('.nav-sidebar-item');
+            if (sideItems[sideMap[secId]]) sideItems[sideMap[secId]].classList.add('active');
+
+            // 섹션별 리렌더링
+            if (secId === 'sec-approval') renderDocList();
+            if (secId === 'sec-schedule') renderCalendar();
+            if (secId === 'sec-org') renderOrgAll();
+            if (secId === 'sec-members') renderMemberList();
+        }
+
+        // 실시간 연동 리스너
         function initRealtimeSync() {
-            // 세션 유지
             const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
             if (savedSession) {
                 try {
@@ -501,26 +533,24 @@
                 }
             }
 
-            // 1. 유저 데이터 실시간 수신 및 즉시 화면 동기화
+            // 1. 임직원 유저 데이터 수신
             db.ref('groupware/users').on('value', (snapshot) => {
                 const data = snapshot.val() || {};
                 globalUsers = { ...DEFAULT_USERS, ...data };
-                
-                // 화면 리렌더링
                 renderMemberList(); 
                 renderOrgAll(); 
                 populateUserSelects();
                 updateBadges(); 
             });
 
-            // 2. 결재 문서 실시간 수신 및 즉시 화면 동기화
+            // 2. 결재 문서 데이터 수신
             db.ref('groupware/docs').on('value', (snapshot) => {
                 globalDocs = snapshot.val() || {};
                 renderDocList(); 
                 updateBadges();
             });
 
-            // 3. 일정 데이터 실시간 수신 및 즉시 화면 동기화
+            // 3. 일정 데이터 수신
             db.ref('groupware/schedules').on('value', (snapshot) => {
                 globalSchedules = snapshot.val() || {};
                 renderCalendar(); 
@@ -530,7 +560,7 @@
 
         function switchAuthTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            if(tab === 'login') {
+            if (tab === 'login') {
                 document.querySelectorAll('.auth-tab')[0].classList.add('active');
                 document.getElementById('loginForm').style.display = 'block';
                 document.getElementById('registerForm').style.display = 'none';
@@ -541,7 +571,6 @@
             }
         }
 
-        // 로그인
         function handleLogin(e) {
             e.preventDefault();
             const rawId = document.getElementById('loginId').value.trim();
@@ -565,11 +594,9 @@
             document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
             document.getElementById('authScreen').style.display = 'none';
             
-            showSection('sec-approval');
-            renderDocList();
+            switchNavSection('sec-approval');
         }
 
-        // 회원가입 (실시간 DB 저장 처리)
         function handleRegister(e) {
             e.preventDefault();
 
@@ -594,14 +621,12 @@
 
             const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
 
-            // Realtime Database에 즉시 등록
             db.ref(`groupware/users/${id}`).set(newUser).then(() => {
                 alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
                 document.getElementById('registerForm').reset();
                 switchAuthTab('login');
                 document.getElementById('loginId').value = id;
             }).catch((err) => {
-                // 네트워크 예외 처리 시에도 로컬에 즉시 등록 처리
                 globalUsers[id] = newUser;
                 renderMemberList();
                 renderOrgAll();
@@ -618,12 +643,8 @@
 
         function showSection(secId) {
             document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(secId).classList.add('active');
-        }
-
-        function setActiveNav(element) {
-            document.querySelectorAll('.header-nav-item').forEach(i => i.classList.remove('active'));
-            if(element) element.classList.add('active');
+            const targetSection = document.getElementById(secId);
+            if(targetSection) targetSection.classList.add('active');
         }
 
         function changeFormType(val) {
@@ -676,7 +697,7 @@
                     <h4 style="margin:15px 0 8px;">💳 지출 상세 청구 내역</h4>
                     <table class="doc-table">
                         <tr><th>지출 적요 항목</th><th style="width:25%;">금액</th></tr>
-                        <tr><td><input type="text" class="form-control" value="클라우드 서버 사용료 및 유지보수 비용"></td><td><input type="number" class="form-control cal-price" value="150000" oninput="calculateExpTotal()"></td></tr>
+                        <tr><td><input type="text" class="form-control" value="클라우드 서버 사용료 및 유지보수 비용"></td><td><input type="number" class="form-control exp-price" value="150000" oninput="calculateExpTotal()"></td></tr>
                         <tr><th>합계 금액</th><td id="expTotal" style="font-weight:800; color:var(--primary-color);">150,000 원</td></tr>
                     </table>`;
             } else if (val === '휴가 신청서') {
@@ -731,24 +752,28 @@
             const rows = document.querySelectorAll('#itemTbody tr');
 
             rows.forEach(r => {
-                const qty = parseFloat(r.querySelector('.cal-qty').value) || 0;
-                const price = parseFloat(r.querySelector('.cal-price').value) || 0;
+                const qtyInput = r.querySelector('.cal-qty');
+                const priceInput = r.querySelector('.cal-price');
+                const qty = qtyInput ? (parseFloat(qtyInput.value) || 0) : 0;
+                const price = priceInput ? (parseFloat(priceInput.value) || 0) : 0;
                 const sum = qty * price;
-                r.querySelector('.cal-sum').value = sum.toLocaleString();
+                const sumInput = r.querySelector('.cal-sum');
+                if(sumInput) sumInput.value = Math.round(sum).toLocaleString();
                 grandSub += sum;
             });
 
             const vat = grandSub * 0.1;
             const grand = grandSub + vat;
 
-            if(document.getElementById('subTotal')) document.getElementById('subTotal').innerText = grandSub.toLocaleString() + ' 원';
-            if(document.getElementById('vatTotal')) document.getElementById('vatTotal').innerText = vat.toLocaleString() + ' 원';
-            if(document.getElementById('grandTotal')) document.getElementById('grandTotal').innerText = grand.toLocaleString() + ' 원';
+            if(document.getElementById('subTotal')) document.getElementById('subTotal').innerText = Math.round(grandSub).toLocaleString() + ' 원';
+            if(document.getElementById('vatTotal')) document.getElementById('vatTotal').innerText = Math.round(vat).toLocaleString() + ' 원';
+            if(document.getElementById('grandTotal')) document.getElementById('grandTotal').innerText = Math.round(grand).toLocaleString() + ' 원';
         }
 
         function calculateExpTotal() {
-            const price = parseFloat(document.querySelector('.cal-price').value) || 0;
-            if(document.getElementById('expTotal')) document.getElementById('expTotal').innerText = price.toLocaleString() + ' 원';
+            const priceInput = document.querySelector('.exp-price');
+            const price = priceInput ? (parseFloat(priceInput.value) || 0) : 0;
+            if(document.getElementById('expTotal')) document.getElementById('expTotal').innerText = Math.round(price).toLocaleString() + ' 원';
         }
 
         function updateVacDays(val) {
@@ -792,6 +817,7 @@
             document.getElementById('docDept').innerText = currentUser ? currentUser.dept : '서비스관리팀';
             document.getElementById('docDate').innerText = today;
             document.getElementById('app0Box').innerText = currentUser ? `${currentUser.name} ${currentUser.pos}` : '작성자';
+            document.getElementById('docTitleInput').value = '';
             document.getElementById('finalStampBadge').className = "badge-status badge-pending";
             document.getElementById('finalStampBadge').innerText = "대기";
 
@@ -814,7 +840,7 @@
         }
 
         function submitNewDoc(docId) {
-            const title = document.getElementById('docTitleInput').value;
+            const title = document.getElementById('docTitleInput').value.trim();
             if(!title) return alert('문서 제목을 입력해 주세요!');
 
             const docData = {
@@ -829,7 +855,7 @@
 
             db.ref(`groupware/docs/${docId}`).set(docData).then(() => {
                 alert('전자결재가 전사 실시간으로 상신되었습니다!');
-                showSection('sec-approval');
+                switchNavSection('sec-approval');
             });
         }
 
@@ -858,7 +884,7 @@
         function approveDoc(docId) {
             db.ref(`groupware/docs/${docId}`).update({ status: 'approved' }).then(() => {
                 alert('승인 처리되었습니다!');
-                showSection('sec-approval');
+                switchNavSection('sec-approval');
             });
         }
 
@@ -944,25 +970,37 @@
             });
         }
 
+        // 캘린더 관련 계산
         function renderCalendar() {
             const grid = document.getElementById('calCellsGrid');
             if(!grid) return;
             grid.innerHTML = '';
             
+            document.getElementById('calMonthTitle').innerText = `${calCurrentYear}년 ${calCurrentMonth + 1}월`;
+
+            const firstDay = new Date(calCurrentYear, calCurrentMonth, 1).getDay();
+            const daysInMonth = new Date(calCurrentYear, calCurrentMonth + 1, 0).getDate();
+
+            // 이전 달 여백
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-cell';
+                emptyCell.style.background = '#f8fafc';
+                grid.appendChild(emptyCell);
+            }
+
             const schedulesList = Object.values(globalSchedules);
 
-            for(let i = 1; i <= 31; i++) {
+            for(let i = 1; i <= daysInMonth; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'calendar-cell';
-                let daySchedules = schedulesList.filter(s => {
-                    if(!s.date) return false;
-                    const dayNum = parseInt(s.date.split('-')[2]);
-                    return dayNum === i;
-                });
+
+                const targetDateStr = `${calCurrentYear}-${String(calCurrentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                let daySchedules = schedulesList.filter(s => s.date === targetDateStr);
 
                 let schHtml = '';
                 daySchedules.forEach(s => {
-                    schHtml += `<div style="background:#e0f2fe; color:#0284c7; font-size:10px; padding:2px; border-radius:3px; margin-top:2px; font-weight:700;">${s.title}</div>`;
+                    schHtml += `<div style="background:#e0f2fe; color:#0284c7; font-size:10px; padding:2px; border-radius:3px; margin-top:2px; font-weight:700;">${s.time ? s.time + ' ' : ''}${s.title}</div>`;
                 });
 
                 cell.innerHTML = `<div class="calendar-date-num">${i}</div>${schHtml}`;
@@ -970,10 +1008,32 @@
             }
         }
 
-        function openScheduleModal() { document.getElementById('schModal').style.display = 'flex'; }
+        function prevMonth() {
+            calCurrentMonth--;
+            if (calCurrentMonth < 0) {
+                calCurrentMonth = 11;
+                calCurrentYear--;
+            }
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            calCurrentMonth++;
+            if (calCurrentMonth > 11) {
+                calCurrentMonth = 0;
+                calCurrentYear++;
+            }
+            renderCalendar();
+        }
+
+        function openScheduleModal() { 
+            document.getElementById('schTitle').value = '';
+            document.getElementById('schDate').value = new Date().toISOString().substring(0, 10);
+            document.getElementById('schModal').style.display = 'flex'; 
+        }
         
         function saveSchedule() {
-            const title = document.getElementById('schTitle').value;
+            const title = document.getElementById('schTitle').value.trim();
             const date = document.getElementById('schDate').value;
             const time = document.getElementById('schTime').value;
             if(!title || !date) return alert('일정 제목과 날짜를 입력하세요.');
