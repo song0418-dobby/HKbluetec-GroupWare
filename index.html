@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HK블루텍 전자결재 그룹웨어</title>
+    <title>HK블루텍 전자결재 및 통합 그룹웨어</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -57,7 +57,7 @@
         }
         .header-nav-item:hover, .header-nav-item.active { color: #fff; border-bottom-color: #38bdf8; background: rgba(255,255,255,0.05); }
 
-        /* Container Layout */
+        /* Layout */
         .app-container { display: flex; width: 100%; margin-top: var(--header-height); height: calc(100vh - var(--header-height)); }
         .app-sidebar {
             width: var(--sidebar-width); background-color: var(--bg-surface); border-right: 1px solid var(--border-light);
@@ -77,7 +77,7 @@
         .page-section { display: none; }
         .page-section.active { display: block; }
 
-        /* UI components */
+        /* Components */
         .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid var(--border-color); background-color: #fff; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); }
         .btn-primary:hover { background-color: var(--primary-hover); }
@@ -95,7 +95,6 @@
         .badge-approved { background: #dcfce7; color: var(--success-color); }
         .badge-admin { background: #e0f2fe; color: #0284c7; border: 1px solid #0284c7; }
 
-        /* Document Wrapper */
         .document-wrapper { background: #fff; max-width: 900px; margin: 0 auto; padding: 35px 40px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .doc-header-selector { background: #f1f5f9; padding: 12px 20px; border-radius: 6px; display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
         .doc-title-main { text-align: center; font-size: 26px; font-weight: 800; margin-bottom: 25px; color: #0f172a; text-decoration: underline; text-underline-offset: 6px; }
@@ -112,19 +111,19 @@
 
         .form-control { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; }
 
-        /* Calendar Styles */
+        /* Calendar */
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--border-color); background: #fff; }
         .calendar-day-head { background: #f1f5f9; text-align: center; padding: 8px; font-weight: 700; border-bottom: 1px solid var(--border-color); font-size: 12px; }
         .calendar-cell { min-height: 90px; border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); padding: 4px; background: #fff; }
         .calendar-date-num { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: var(--secondary-color); }
 
-        /* Org Tree */
+        /* Org Chart */
         .org-tree { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px 0; }
         .org-node { background: #fff; border: 2px solid var(--primary-color); border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 140px; }
         .org-branches { display: flex; gap: 30px; position: relative; flex-wrap: wrap; justify-content: center; }
 
-        /* Modals */
+        /* Modal */
         .modal-overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9000; }
         .modal-body { background:#fff; width:480px; border-radius:8px; padding:24px; max-height: 90vh; overflow-y: auto; }
         .form-group { margin-bottom: 12px; }
@@ -134,7 +133,7 @@
 </head>
 <body>
 
-    <!-- AUTH SCREEN -->
+    <!-- 로그인 및 회원가입 모달 -->
     <div id="authScreen">
         <div class="auth-card">
             <h2 style="text-align:center; margin-bottom:5px;"><i class="fa-solid fa-gem" style="color:#0284c7;"></i> HK블루텍</h2>
@@ -183,18 +182,18 @@
         </div>
     </div>
 
-    <!-- APP HEADER -->
+    <!-- 상단 헤더 -->
     <header class="app-header">
         <a class="header-brand" onclick="switchNavSection('sec-home', this);">
             <i class="fa-solid fa-gem" style="color:#38bdf8;"></i> HK블루텍 GROUPWARE
-            <span class="sync-badge"><i class="fa-solid fa-wifi"></i> 실시간 클라우드 DB 연동됨</span>
+            <span class="sync-badge"><i class="fa-solid fa-wifi"></i> 실시간 클라우드 DB 연동</span>
         </a>
         <nav class="header-nav">
             <div class="header-nav-item active" onclick="switchNavSection('sec-home', this);">홈</div>
             <div class="header-nav-item" onclick="switchNavSection('sec-approval', this);">전자결재</div>
             <div class="header-nav-item" onclick="switchNavSection('sec-schedule', this);">일정 캘린더</div>
             <div class="header-nav-item" onclick="switchNavSection('sec-org', this);">조직도 관리</div>
-            <div class="header-nav-item" onclick="switchNavSection('sec-members', this);">회원 및 가입 관리</div>
+            <div class="header-nav-item" onclick="switchNavSection('sec-members', this);">회원 관리</div>
         </nav>
         <div>
             <span id="currentUserInfo" style="font-weight:700; color:#fff; margin-right:15px;">-</span>
@@ -203,7 +202,7 @@
     </header>
 
     <div class="app-container">
-        <!-- SIDEBAR -->
+        <!-- 좌측 사이드바 -->
         <aside class="app-sidebar">
             <button class="btn-new-doc" onclick="openForm()"><i class="fa-solid fa-pen-to-square"></i> 새 결재 작성</button>
             <ul class="menu-list">
@@ -225,16 +224,16 @@
                 </li>
                 <li class="menu-item nav-sidebar-item">
                     <a onclick="switchNavSection('sec-members');">
-                        <span><i class="fa-solid fa-users-gear"></i> 전체 회원가입 내역</span>
+                        <span><i class="fa-solid fa-users-gear"></i> 회원 및 계정 관리</span>
                     </a>
                 </li>
             </ul>
         </aside>
 
-        <!-- MAIN CONTENT AREA -->
+        <!-- 메인 콘텐츠 영역 -->
         <main class="app-main">
 
-            <!-- DASHBOARD -->
+            <!-- 1. 메인 대시보드 -->
             <section id="sec-home" class="page-section active">
                 <h2 style="margin-bottom:20px;">대시보드</h2>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:20px;">
@@ -259,10 +258,10 @@
                 </div>
             </section>
 
-            <!-- APPROVAL LIST SECTION -->
+            <!-- 2. 전자결재 목록 -->
             <section id="sec-approval" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>📑 전자결재 전체 문서 목록 (실시간 전체 공유)</h2>
+                    <h2>📑 전자결재 전체 문서 목록</h2>
                     <button class="btn btn-primary" onclick="openForm()"><i class="fa-solid fa-plus"></i> 기안 작성</button>
                 </div>
                 <div class="card">
@@ -275,7 +274,7 @@
                                 <th>제목</th>
                                 <th>기안자</th>
                                 <th>결재상태</th>
-                                <th>관리/상세보기</th>
+                                <th>관리/상세/삭제</th>
                             </tr>
                         </thead>
                         <tbody id="realDocTbody"></tbody>
@@ -283,7 +282,7 @@
                 </div>
             </section>
 
-            <!-- APPROVAL FORM CREATION AND VIEW -->
+            <!-- 3. 전자결재 작성 및 상세보기 -->
             <section id="sec-form" class="page-section">
                 <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
                     <button class="btn" onclick="showSection('sec-approval'); renderDocList();"><i class="fa-solid fa-arrow-left"></i> 목록으로</button>
@@ -344,10 +343,10 @@
                 </div>
             </section>
 
-            <!-- SCHEDULE SECTION -->
+            <!-- 4. 일정 관리 캘린더 -->
             <section id="sec-schedule" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h2>📅 일정 관리 캘린더</h2>
+                    <h2>📅 일정 관리 캘린더 (등록/수정/삭제 지원)</h2>
                     <button class="btn btn-primary" onclick="openScheduleModal()"><i class="fa-solid fa-calendar-plus"></i> 새 일정 추가</button>
                 </div>
                 <div class="card">
@@ -370,11 +369,11 @@
                 </div>
             </section>
 
-            <!-- ORG SECTION -->
+            <!-- 5. 임직원 및 조직도 관리 -->
             <section id="sec-org" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h2>🏢 임직원 및 시각화 조직도</h2>
-                    <button class="btn btn-primary" onclick="openUserModal()"><i class="fa-solid fa-user-plus"></i> 사원 직접 추가</button>
+                    <button class="btn btn-primary" onclick="openUserModal()"><i class="fa-solid fa-user-plus"></i> 조직원 추가</button>
                 </div>
 
                 <div class="card" style="background:#f8fafc; border: 1px dashed var(--primary-color);">
@@ -391,7 +390,7 @@
                                 <th>성명</th>
                                 <th>직급</th>
                                 <th>부서</th>
-                                <th>관리</th>
+                                <th>관리(수정/삭제)</th>
                             </tr>
                         </thead>
                         <tbody id="orgTbody"></tbody>
@@ -399,13 +398,13 @@
                 </div>
             </section>
 
-            <!-- MEMBER MANAGEMENT SECTION -->
+            <!-- 6. 회원 및 계정 전체 관리 -->
             <section id="sec-members" class="page-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <div>
-                        <h2>👥 전체 가입자 이력 및 계정 실시간 제어</h2>
+                        <h2>👥 전체 회원 및 계정 관리</h2>
                         <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">
-                            최고 관리자 계정: <strong style="color:var(--primary-color);">song0418_hk</strong> (가입된 전체 계정 정보 실시간 조회/수정/삭제 지원)
+                            최고 관리자 계정: <strong style="color:var(--primary-color);">song0418_hk</strong>
                         </p>
                     </div>
                     <button class="btn btn-primary" onclick="openUserModal()"><i class="fa-solid fa-user-plus"></i> 신규 회원 등록</button>
@@ -419,7 +418,7 @@
                                 <th>성명</th>
                                 <th>직급</th>
                                 <th>부서</th>
-                                <th>권한 및 수정/삭제</th>
+                                <th>수정 및 삭제 제어</th>
                             </tr>
                         </thead>
                         <tbody id="memberTbody"></tbody>
@@ -430,20 +429,26 @@
         </main>
     </div>
 
-    <!-- MODALS -->
+    <!-- 모달 창 모음 -->
+    <!-- 일정 모달 -->
     <div id="schModal" class="modal-overlay">
         <div class="modal-body">
-            <h3 style="margin-bottom:15px;">새 일정 등록</h3>
-            <div class="form-group"><label for="schTitle">일정 제목</label><input type="text" id="schTitle" class="form-control" placeholder="예: 주간 회의"></div>
+            <h3 style="margin-bottom:15px;" id="schModalTitle">새 일정 등록</h3>
+            <input type="hidden" id="schIdInput">
+            <div class="form-group"><label for="schTitle">일정 제목</label><input type="text" id="schTitle" class="form-control" placeholder="예: 주간 업무 회의"></div>
             <div class="form-group"><label for="schDate">날짜</label><input type="date" id="schDate" class="form-control"></div>
             <div class="form-group"><label for="schTime">시간</label><input type="time" id="schTime" class="form-control" value="10:00"></div>
-            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
-                <button class="btn" onclick="closeModal('schModal')">취소</button>
-                <button class="btn btn-primary" onclick="saveSchedule()">저장하기</button>
+            <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                <button class="btn btn-danger" id="btnDeleteSch" style="display:none;" onclick="deleteSchedule()"><i class="fa-solid fa-trash"></i> 삭제</button>
+                <div style="margin-left:auto; display:flex; gap:8px;">
+                    <button class="btn" onclick="closeModal('schModal')">취소</button>
+                    <button class="btn btn-primary" onclick="saveSchedule()">저장하기</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- 임직원/회원 모달 -->
     <div id="userModal" class="modal-overlay">
         <div class="modal-body">
             <h3 style="margin-bottom:15px;">임직원 정보 등록/수정</h3>
@@ -460,7 +465,7 @@
     </div>
 
     <script>
-        // FIREBASE CLOUD DB INITIALIZATION
+        // FIREBASE CLOUD DB 설정
         const firebaseConfig = {
             apiKey: "AIzaSyDemoKeyForHKBluetechSystem2026",
             authDomain: "hkbluetech-groupware.firebaseapp.com",
@@ -472,10 +477,9 @@
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
         db.settings({ merge: true });
 
-        // 기본 최고관리자 데이터
+        // 기본 계정 설정
         const DEFAULT_USERS = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
@@ -489,7 +493,6 @@
         let calCurrentYear = 2026;
         let calCurrentMonth = 6;
 
-        // 로컬 브라우저 백업 스토리지 로드
         function loadLocalUsers() {
             const localUsers = localStorage.getItem('HK_SHARED_USERS');
             if (localUsers) {
@@ -500,7 +503,7 @@
             }
         }
 
-        // 실시간 데이터 수신 리스너 (모든 사용자의 기기와 연동)
+        // DB 리스너 및 데이터 실시간 연동
         function listenRealtimeDB() {
             loadLocalUsers();
 
@@ -547,7 +550,6 @@
             });
         }
 
-        // 앱 초기화
         function initApp() {
             loadLocalUsers();
             
@@ -612,7 +614,7 @@
             const inputId = document.getElementById('loginId').value.trim().toLowerCase();
             const inputPw = String(document.getElementById('loginPw').value.trim());
 
-            loadLocalUsers(); // 최근 데이터 즉시 동기화
+            loadLocalUsers();
 
             const user = globalUsers[inputId];
 
@@ -683,7 +685,7 @@
                         <tr><th style="width:20%;">납품 및 진행처</th><td><input type="text" class="form-control" value="HK블루텍 본사"></td><th style="width:20%;">지급 희망일</th><td><input type="date" class="form-control"></td></tr>
                     </table>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0 8px;">
-                        <h4 style="margin:0;">🛒 구매/지출 내역 세부 항목</h4>
+                        <h4 style="margin:0;">🛒 세부 항목 내역</h4>
                         <button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="addFormRow()"><i class="fa-solid fa-plus"></i> 항목 추가</button>
                     </div>
                     <table class="doc-table" id="itemTable">
@@ -698,7 +700,7 @@
                         </thead>
                         <tbody id="itemTbody">
                             <tr>
-                                <td><input type="text" class="form-control" value="사내 업무용 고성능 모니터"></td>
+                                <td><input type="text" class="form-control" value="사내 업무용 모니터"></td>
                                 <td><input type="number" class="form-control cal-qty" value="2" oninput="calculateTotal()"></td>
                                 <td><input type="number" class="form-control cal-price" value="350000" oninput="calculateTotal()"></td>
                                 <td><input type="text" class="form-control cal-sum" value="700,000" readonly></td>
@@ -716,13 +718,13 @@
                     <table class="doc-table">
                         <tr><th style="width:20%;">지출 구분</th><td>
                             <select class="form-control"><option>법인카드</option><option>계좌이체</option><option>현금지출</option></select>
-                        </td><th style="width:20%;">지출 가망일</th><td><input type="date" class="form-control"></td></tr>
+                        </td><th style="width:20%;">지출 예정일</th><td><input type="date" class="form-control"></td></tr>
                         <tr><th>입금 계좌정보</th><td colspan="3"><input type="text" class="form-control" placeholder="은행명 / 계좌번호 / 예금주명"></td></tr>
                     </table>
                     <h4 style="margin:15px 0 8px;">💳 지출 상세 청구 내역</h4>
                     <table class="doc-table">
                         <tr><th>지출 적요 항목</th><th style="width:25%;">금액</th></tr>
-                        <tr><td><input type="text" class="form-control" value="클라우드 서버 사용료 및 유지보수 비용"></td><td><input type="number" class="form-control exp-price" value="150000" oninput="calculateExpTotal()"></td></tr>
+                        <tr><td><input type="text" class="form-control" value="서버 사용료 및 시스템 유지보수"></td><td><input type="number" class="form-control exp-price" value="150000" oninput="calculateExpTotal()"></td></tr>
                         <tr><th>합계 금액</th><td id="expTotal" style="font-weight:800; color:var(--primary-color);">150,000 원</td></tr>
                     </table>`;
             } else if (val === '휴가 신청서') {
@@ -739,13 +741,13 @@
                         </td><th style="width:20%;">차감 일수</th><td id="vacDays">1 일</td></tr>
                         <tr><th>휴가 기간</th><td colspan="3"><input type="date" class="form-control" style="width:45%; display:inline;"> ~ <input type="date" class="form-control" style="width:45%; display:inline;"></td></tr>
                         <tr><th>업무 대직자</th><td><input type="text" class="form-control" placeholder="성명 및 직급"></td><th>비상 연락처</th><td><input type="text" class="form-control" placeholder="010-0000-0000"></td></tr>
-                        <tr><th>사유</th><td colspan="3"><textarea class="form-control" rows="3" placeholder="휴가 사유를 적어주세요."></textarea></td></tr>
+                        <tr><th>사유</th><td colspan="3"><textarea class="form-control" rows="3" placeholder="휴가 사유 작성"></textarea></td></tr>
                     </table>`;
             } else {
                 body.innerHTML = `
                     <table class="doc-table">
-                        <tr><th style="width:20%;">기안 목적</th><td colspan="3"><input type="text" class="form-control" placeholder="업무 기안의 핵심 목적"></td></tr>
-                        <tr><th>상세 기안 내용</th><td colspan="3"><textarea class="form-control" rows="8" placeholder="상세 기안 내용 작성"></textarea></td></tr>
+                        <tr><th style="width:20%;">기안 목적</th><td colspan="3"><input type="text" class="form-control" placeholder="업무 기안의 목적"></td></tr>
+                        <tr><th>상세 기안 내용</th><td colspan="3"><textarea class="form-control" rows="8" placeholder="상세 내용 작성"></textarea></td></tr>
                     </table>`;
             }
         }
@@ -805,12 +807,12 @@
             if(document.getElementById('vacDays')) document.getElementById('vacDays').innerText = val + ' 일';
         }
 
+        // 전자결재 문서 목록 출력 (삭제/승인/조회 CRUD 완비)
         function renderDocList() {
             const tbody = document.getElementById('realDocTbody');
             if(!tbody) return;
             tbody.innerHTML = '';
 
-            const isOwner = checkIsOwner();
             let docsList = Object.values(globalDocs);
 
             if (docsList.length === 0) {
@@ -818,14 +820,12 @@
                 return;
             }
 
-            docsList.sort((a, b) => b.createdAt - a.createdAt);
+            docsList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
             docsList.forEach(d => {
                 const tr = document.createElement('tr');
                 let badgeHtml = '<span class="badge-status badge-pending">결재 대기</span>';
                 if (d.status === 'approved') badgeHtml = '<span class="badge-status badge-approved">최종 승인</span>';
-
-                let deleteBtn = isOwner ? `<button class="btn btn-danger" style="padding:4px 8px; font-size:11px; margin-left:4px;" onclick="deleteDoc('${d.id}')"><i class="fa-solid fa-trash"></i> 삭제</button>` : '';
 
                 tr.innerHTML = `
                     <td><strong>${d.id}</strong></td>
@@ -835,8 +835,8 @@
                     <td>${d.author}</td>
                     <td>${badgeHtml}</td>
                     <td>
-                        <button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="viewDetail('${d.id}')"><i class="fa-solid fa-eye"></i> 열람/결재</button>
-                        ${deleteBtn}
+                        <button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="viewDetail('${d.id}')"><i class="fa-solid fa-eye"></i> 상세보기</button>
+                        <button class="btn btn-danger" style="padding:4px 8px; font-size:11px; margin-left:4px;" onclick="deleteDoc('${d.id}')"><i class="fa-solid fa-trash"></i> 삭제</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -844,14 +844,13 @@
         }
 
         async function deleteDoc(docId) {
-            if (!checkIsOwner()) return alert('최고 관리자만 삭제할 수 있습니다.');
-            if (confirm(`문서번호 [${docId}]를 완전히 삭제하시겠습니까?`)) {
+            if (confirm(`문서번호 [${docId}]를 정말 삭제하시겠습니까?`)) {
                 try {
                     await db.collection("documents").doc(docId).delete();
                 } catch(e) {}
                 delete globalDocs[docId];
                 localStorage.setItem('HK_SHARED_DOCS', JSON.stringify(globalDocs));
-                alert('결재 문서가 삭제되었습니다.');
+                alert('전자결재 문서가 삭제되었습니다.');
                 renderDocList();
                 updateBadges();
             }
@@ -890,6 +889,7 @@
             });
         }
 
+        // 결재 상신 (등록) 완벽 복구
         async function submitNewDoc(docId) {
             const title = document.getElementById('docTitleInput').value.trim();
             if(!title) {
@@ -921,7 +921,7 @@
                 await db.collection("documents").doc(docId).set(docData);
             } catch(e) {}
 
-            alert('전자결재가 실시간으로 성공적으로 상신되었습니다!');
+            alert('전자결재가 정상적으로 상신 완료되었습니다!');
             updateBadges();
             switchNavSection('sec-approval');
         }
@@ -946,7 +946,7 @@
             } else {
                 document.getElementById('finalStampBadge').className = "badge-status badge-pending";
                 document.getElementById('finalStampBadge').innerText = "대기";
-                document.getElementById('actionArea').innerHTML = `<button class="btn btn-success" onclick="approveDoc('${d.id}')"><i class="fa-solid fa-check"></i> 즉시 승인 처리</button>`;
+                document.getElementById('actionArea').innerHTML = `<button class="btn btn-success" onclick="approveDoc('${d.id}')"><i class="fa-solid fa-check"></i> 결재 승인 처리</button>`;
             }
         }
 
@@ -958,12 +958,13 @@
                 try {
                     await db.collection("documents").doc(docId).update({ status: 'approved' });
                 } catch(e) {}
-                alert('성공적으로 결재 승인 처리되었습니다!');
+                alert('성공적으로 승인 처리되었습니다!');
                 updateBadges();
                 switchNavSection('sec-approval');
             }
         }
 
+        // 조직도 및 명부 관리 (수정/삭제 가능)
         function renderOrgAll() {
             const container = document.getElementById('visualOrgContainer');
             if(!container) return;
@@ -995,56 +996,56 @@
             if(!tbody) return;
             tbody.innerHTML = '';
             users.forEach(u => {
-                tbody.innerHTML += `<tr><td>${u.id}</td><td><strong>${u.name}</strong></td><td>${u.pos}</td><td>${u.dept}</td><td><button class="btn" style="padding:2px 6px;" onclick="openUserModal('${u.id}')">수정</button></td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td>${u.id}</td>
+                    <td><strong>${u.name}</strong></td>
+                    <td>${u.pos}</td>
+                    <td>${u.dept}</td>
+                    <td>
+                        <button class="btn" style="padding:2px 6px;" onclick="openUserModal('${u.id}')">수정</button>
+                        <button class="btn btn-danger" style="padding:2px 6px;" onclick="deleteUser('${u.id}')">삭제</button>
+                    </td>
+                </tr>`;
             });
         }
 
+        // 회원 관리 (등록/수정/삭제 완전 구현)
         function renderMemberList() {
             const tbody = document.getElementById('memberTbody');
             if(!tbody) return;
             tbody.innerHTML = '';
-            
-            const isCurrentOwner = checkIsOwner();
 
             Object.values(globalUsers).forEach(u => {
                 const isOwner = u.id === 'song0418_hk' || u.isOwner;
-                
-                let actionBtnHtml = `<button class="btn" style="padding:2px 8px; font-size:12px;" onclick="openUserModal('${u.id}')"><i class="fa-solid fa-pen"></i> 수정</button>`;
-                
-                if (isCurrentOwner && !isOwner) {
-                    actionBtnHtml += ` <button class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="deleteUser('${u.id}')"><i class="fa-solid fa-trash"></i> 계정 삭제</button>`;
-                }
 
                 tbody.innerHTML += `<tr>
                     <td><strong>${u.id}</strong> ${isOwner ? '<span class="badge-status badge-admin">최고관리자</span>' : ''}</td>
-                    <td><span style="font-family:monospace; color:var(--primary-color); font-weight:bold;">${isCurrentOwner ? u.pw : '••••••••'}</span></td>
+                    <td><span style="font-family:monospace; color:var(--primary-color); font-weight:bold;">${u.pw}</span></td>
                     <td><strong>${u.name}</strong></td>
                     <td>${u.pos}</td>
                     <td>${u.dept}</td>
-                    <td>${actionBtnHtml}</td>
+                    <td>
+                        <button class="btn" style="padding:2px 8px; font-size:12px;" onclick="openUserModal('${u.id}')"><i class="fa-solid fa-pen"></i> 수정</button>
+                        ${!isOwner ? `<button class="btn btn-danger" style="padding:2px 8px; font-size:12px; margin-left:4px;" onclick="deleteUser('${u.id}')"><i class="fa-solid fa-trash"></i> 삭제</button>` : ''}
+                    </td>
                 </tr>`;
             });
         }
 
         async function deleteUser(userId) {
-            if (!checkIsOwner()) {
-                alert('계정 삭제는 최고 관리자만 수행할 수 있습니다.');
-                return;
-            }
-
             if (userId === 'song0418_hk') {
                 alert('최고 관리자 계정은 삭제할 수 없습니다.');
                 return;
             }
 
-            if (confirm(`정말로 계정 [${userId}] (${globalUsers[userId].name}) 님을 완전히 삭제하시겠습니까?`)) {
+            if (confirm(`정말로 계정 [${userId}] (${globalUsers[userId]?.name || ''}) 님을 삭제하시겠습니까?`)) {
                 delete globalUsers[userId];
                 localStorage.setItem('HK_SHARED_USERS', JSON.stringify(globalUsers));
 
                 try {
                     await db.collection("users").doc(userId).delete();
                 } catch(e) {}
-                alert('계정이 성공적으로 삭제되었습니다.');
+                alert('계정이 삭제되었습니다.');
                 renderMemberList();
                 renderOrgAll();
                 updateBadges();
@@ -1077,7 +1078,7 @@
             const pos = document.getElementById('userPos').value.trim();
             const dept = document.getElementById('userDept').value.trim();
 
-            if(!id || !name || !pw) return alert('아이디, 비밀번호, 성명은 필수 입력입니다.');
+            if(!id || !name || !pw) return alert('아이디, 비밀번호, 성명은 필수입니다.');
 
             const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
             
@@ -1088,13 +1089,14 @@
                 await db.collection("users").doc(id).set(u);
             } catch(e) {}
 
-            alert('임직원 정보가 등록/수정되었습니다.');
-            closeModal('userModal'); // 계정 생성 팝업 자동 닫기!
+            alert('회원 정보가 성공적으로 저장되었습니다.');
+            closeModal('userModal'); // 팝업 창 자동 닫기
             renderMemberList();
             renderOrgAll();
             updateBadges();
         }
 
+        // 일정 관리 캘린더 (등록/수정/삭제 CRUD 완비)
         function renderCalendar() {
             const grid = document.getElementById('calCellsGrid');
             if(!grid) return;
@@ -1123,7 +1125,7 @@
 
                 let schHtml = '';
                 daySchedules.forEach(s => {
-                    schHtml += `<div style="background:#e0f2fe; color:#0284c7; font-size:10px; padding:2px; border-radius:3px; margin-top:2px; font-weight:700;">${s.time ? s.time + ' ' : ''}${s.title}</div>`;
+                    schHtml += `<div onclick="openScheduleModal('${s.id}')" style="background:#e0f2fe; color:#0284c7; font-size:10px; padding:3px; border-radius:3px; margin-top:2px; font-weight:700; cursor:pointer;" title="클릭하여 수정/삭제">${s.time ? s.time + ' ' : ''}${s.title}</div>`;
                 });
 
                 cell.innerHTML = `<div class="calendar-date-num">${i}</div>${schHtml}`;
@@ -1133,35 +1135,44 @@
 
         function prevMonth() {
             calCurrentMonth--;
-            if (calCurrentMonth < 0) {
-                calCurrentMonth = 11;
-                calCurrentYear--;
-            }
+            if (calCurrentMonth < 0) { calCurrentMonth = 11; calCurrentYear--; }
             renderCalendar();
         }
 
         function nextMonth() {
             calCurrentMonth++;
-            if (calCurrentMonth > 11) {
-                calCurrentMonth = 0;
-                calCurrentYear++;
-            }
+            if (calCurrentMonth > 11) { calCurrentMonth = 0; calCurrentYear++; }
             renderCalendar();
         }
 
-        function openScheduleModal() { 
-            document.getElementById('schTitle').value = '';
-            document.getElementById('schDate').value = new Date().toISOString().substring(0, 10);
+        function openScheduleModal(schId = null) { 
+            if (schId && globalSchedules[schId]) {
+                const s = globalSchedules[schId];
+                document.getElementById('schModalTitle').innerText = '일정 수정 / 삭제';
+                document.getElementById('schIdInput').value = s.id;
+                document.getElementById('schTitle').value = s.title;
+                document.getElementById('schDate').value = s.date;
+                document.getElementById('schTime').value = s.time || '10:00';
+                document.getElementById('btnDeleteSch').style.display = 'inline-flex';
+            } else {
+                document.getElementById('schModalTitle').innerText = '새 일정 등록';
+                document.getElementById('schIdInput').value = '';
+                document.getElementById('schTitle').value = '';
+                document.getElementById('schDate').value = new Date().toISOString().substring(0, 10);
+                document.getElementById('schTime').value = '10:00';
+                document.getElementById('btnDeleteSch').style.display = 'none';
+            }
             document.getElementById('schModal').style.display = 'flex'; 
         }
         
         async function saveSchedule() {
+            const schId = document.getElementById('schIdInput').value;
             const title = document.getElementById('schTitle').value.trim();
             const date = document.getElementById('schDate').value;
             const time = document.getElementById('schTime').value;
             if(!title || !date) return alert('일정 제목과 날짜를 입력하세요.');
 
-            const id = 'SCH-' + Date.now();
+            const id = schId ? schId : ('SCH-' + Date.now());
             const sch = { id, title, date, time };
 
             globalSchedules[id] = sch;
@@ -1170,10 +1181,26 @@
                 await db.collection("schedules").doc(id).set(sch);
             } catch(e) {}
 
-            alert('일정이 정상 등록되었습니다.');
-            closeModal('schModal');
+            alert('일정이 저장되었습니다.');
+            closeModal('schModal'); // 팝업 창 자동 닫기
             renderCalendar();
             updateBadges();
+        }
+
+        async function deleteSchedule() {
+            const schId = document.getElementById('schIdInput').value;
+            if(!schId) return;
+
+            if(confirm('이 일정을 삭제하시겠습니까?')) {
+                delete globalSchedules[schId];
+                try {
+                    await db.collection("schedules").doc(schId).delete();
+                } catch(e) {}
+                alert('일정이 삭제되었습니다.');
+                closeModal('schModal');
+                renderCalendar();
+                updateBadges();
+            }
         }
 
         function closeModal(id) { 
