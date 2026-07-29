@@ -529,7 +529,7 @@
             }
 
             // 1. 유저 실시간 수신
-            db.ref('groupware/users').on('value', (snapshot) => {
+            db.ref('users').on('value', (snapshot) => {
                 const data = snapshot.val() || {};
                 globalUsers = { ...DEFAULT_USERS, ...data };
                 renderMemberList(); 
@@ -539,14 +539,14 @@
             });
 
             // 2. 전자결재 실시간 수신
-            db.ref('groupware/docs').on('value', (snapshot) => {
+            db.ref('docs').on('value', (snapshot) => {
                 globalDocs = snapshot.val() || {};
                 renderDocList(); 
                 updateBadges();
             });
 
             // 3. 일정 캘린더 실시간 수신
-            db.ref('groupware/schedules').on('value', (snapshot) => {
+            db.ref('schedules').on('value', (snapshot) => {
                 globalSchedules = snapshot.val() || {};
                 renderCalendar(); 
                 updateBadges();
@@ -593,7 +593,7 @@
         }
 
         // 회원가입 보완 처리
-        function handleRegister(e) {
+        async function handleRegister(e) {
             e.preventDefault();
 
             const rawId = document.getElementById('regId').value.trim();
@@ -617,20 +617,19 @@
 
             const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
 
-            // DB 저장 및 로컬 동시 반영
-            db.ref(`groupware/users/${id}`).set(newUser).then(() => {
-                alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
-                document.getElementById('registerForm').reset();
-                switchAuthTab('login');
-                document.getElementById('loginId').value = id;
-            }).catch((err) => {
-                globalUsers[id] = newUser;
-                renderMemberList();
-                renderOrgAll();
-                alert(`[${name}] 님의 회원가입이 처리되었습니다.`);
-                switchAuthTab('login');
-                document.getElementById('loginId').value = id;
-            });
+            try {
+                await db.ref('users/' + id).set(newUser);
+            } catch(err) {
+                console.log(err);
+            }
+
+            globalUsers[id] = newUser;
+            renderMemberList();
+            renderOrgAll();
+            alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
+            document.getElementById('registerForm').reset();
+            switchAuthTab('login');
+            document.getElementById('loginId').value = id;
         }
 
         function handleLogout() {
@@ -836,7 +835,7 @@
             });
         }
 
-        function submitNewDoc(docId) {
+        async function submitNewDoc(docId) {
             const title = document.getElementById('docTitleInput').value.trim();
             if(!title) return alert('문서 제목을 입력해 주세요!');
 
@@ -850,10 +849,15 @@
                 status: 'pending'
             };
 
-            db.ref(`groupware/docs/${docId}`).set(docData).then(() => {
-                alert('전자결재가 전사 실시간으로 상신되었습니다!');
-                switchNavSection('sec-approval');
-            });
+            try {
+                await db.ref('docs/' + docId).set(docData);
+            } catch(err) {
+                console.log(err);
+            }
+
+            globalDocs[docId] = docData;
+            alert('전자결재가 전사 실시간으로 상신되었습니다!');
+            switchNavSection('sec-approval');
         }
 
         function viewDetail(docId) {
@@ -878,11 +882,15 @@
             }
         }
 
-        function approveDoc(docId) {
-            db.ref(`groupware/docs/${docId}`).update({ status: 'approved' }).then(() => {
-                alert('승인 처리되었습니다!');
-                switchNavSection('sec-approval');
-            });
+        async function approveDoc(docId) {
+            try {
+                await db.ref('docs/' + docId).update({ status: 'approved' });
+            } catch(err) {
+                console.log(err);
+            }
+            if(globalDocs[docId]) globalDocs[docId].status = 'approved';
+            alert('승인 처리되었습니다!');
+            switchNavSection('sec-approval');
         }
 
         function renderOrgAll() {
@@ -949,7 +957,7 @@
             document.getElementById('userModal').style.display = 'flex';
         }
 
-        function saveUser() {
+        async function saveUser() {
             const rawId = document.getElementById('userIdInput').value.trim();
             const id = rawId.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
             const pw = String(document.getElementById('userPwInput').value.trim());
@@ -961,10 +969,17 @@
 
             const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
 
-            db.ref(`groupware/users/${id}`).set(u).then(() => {
-                alert('임직원 정보가 실시간 반영되었습니다.');
-                closeModal('userModal');
-            });
+            try {
+                await db.ref('users/' + id).set(u);
+            } catch(err) {
+                console.log(err);
+            }
+
+            globalUsers[id] = u;
+            renderMemberList();
+            renderOrgAll();
+            alert('임직원 정보가 실시간 반영되었습니다.');
+            closeModal('userModal');
         }
 
         function renderCalendar() {
@@ -1027,7 +1042,7 @@
             document.getElementById('schModal').style.display = 'flex'; 
         }
         
-        function saveSchedule() {
+        async function saveSchedule() {
             const title = document.getElementById('schTitle').value.trim();
             const date = document.getElementById('schDate').value;
             const time = document.getElementById('schTime').value;
@@ -1036,10 +1051,16 @@
             const id = 'SCH-' + Date.now();
             const sch = { id, title, date, time };
 
-            db.ref(`groupware/schedules/${id}`).set(sch).then(() => {
-                alert('일정이 등록되어 전사에 공유되었습니다.');
-                closeModal('schModal');
-            });
+            try {
+                await db.ref('schedules/' + id).set(sch);
+            } catch(err) {
+                console.log(err);
+            }
+
+            globalSchedules[id] = sch;
+            renderCalendar();
+            alert('일정이 등록되어 전사에 공유되었습니다.');
+            closeModal('schModal');
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
