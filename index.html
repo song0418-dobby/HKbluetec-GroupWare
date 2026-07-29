@@ -470,49 +470,57 @@
             appId: "1:123456789:web:abcdef123456"
         };
         
-        // 데모용 인메모리/로컬 동기화 스토리지 엔진
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 데모 환경 Firestore 에뮬레이터 로컬 연동
         db.settings({ merge: true });
 
-        // 기본 최고관리자 데이터 설정
+        // 기본 최고관리자 데이터
         const DEFAULT_USERS = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
         };
 
         let currentUser = null;
-        let globalUsers = DEFAULT_USERS;
+        let globalUsers = { ...DEFAULT_USERS };
         let globalDocs = {};
         let globalSchedules = {};
 
         let calCurrentYear = 2026;
         let calCurrentMonth = 6;
 
+        // 로컬 브라우저 백업 스토리지 로드
+        function loadLocalUsers() {
+            const localUsers = localStorage.getItem('HK_SHARED_USERS');
+            if (localUsers) {
+                try {
+                    const parsed = JSON.parse(localUsers);
+                    globalUsers = { ...DEFAULT_USERS, ...parsed };
+                } catch(e){}
+            }
+        }
+
         // 실시간 데이터 수신 리스너 (모든 사용자의 기기와 연동)
         function listenRealtimeDB() {
-            // 회원 데이터 실시간 동기화
+            loadLocalUsers();
+
             db.collection("users").onSnapshot((snapshot) => {
                 let usersObj = { ...DEFAULT_USERS };
                 snapshot.forEach((doc) => {
                     usersObj[doc.id] = doc.data();
                 });
                 globalUsers = usersObj;
+                localStorage.setItem('HK_SHARED_USERS', JSON.stringify(globalUsers));
                 renderMemberList();
                 renderOrgAll();
                 updateBadges();
             }, (error) => {
-                // Firebase 연결 불가 시 브라우저 공유 로컬스토리지 백업 모드
-                const fallbackUsers = localStorage.getItem('HK_SHARED_USERS');
-                if(fallbackUsers) globalUsers = JSON.parse(fallbackUsers);
+                loadLocalUsers();
                 renderMemberList();
                 renderOrgAll();
                 updateBadges();
             });
 
-            // 결재 문서 데이터 실시간 동기화
             db.collection("documents").onSnapshot((snapshot) => {
                 let docsObj = {};
                 snapshot.forEach((doc) => {
@@ -528,7 +536,6 @@
                 updateBadges();
             });
 
-            // 일정 데이터 실시간 동기화
             db.collection("schedules").onSnapshot((snapshot) => {
                 let schObj = {};
                 snapshot.forEach((doc) => {
@@ -542,6 +549,8 @@
 
         // 앱 초기화
         function initApp() {
+            loadLocalUsers();
+            
             const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
             if (savedSession) {
                 try {
@@ -601,7 +610,9 @@
         function handleLogin(e) {
             e.preventDefault();
             const inputId = document.getElementById('loginId').value.trim().toLowerCase();
-            const inputPw = document.getElementById('loginPw').value.trim();
+            const inputPw = String(document.getElementById('loginPw').value.trim());
+
+            loadLocalUsers(); // 최근 데이터 즉시 동기화
 
             const user = globalUsers[inputId];
 
@@ -610,7 +621,7 @@
                 return;
             }
 
-            if (String(user.pw) !== String(inputPw)) {
+            if (String(user.pw) !== inputPw) {
                 alert('비밀번호가 올바르지 않습니다.');
                 return;
             }
@@ -631,18 +642,18 @@
             const pos = document.getElementById('regPos').value.trim();
             const dept = document.getElementById('regDept').value.trim();
 
-            if (!id) return alert('아이디를 입력해 주세요.');
+            if (!id || !pw) return alert('아이디와 비밀번호를 모두 입력해 주세요.');
 
             const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
             
+            globalUsers[id] = newUser;
+            localStorage.setItem('HK_SHARED_USERS', JSON.stringify(globalUsers));
+
             try {
                 await db.collection("users").doc(id).set(newUser);
-            } catch(e) {
-                globalUsers[id] = newUser;
-                localStorage.setItem('HK_SHARED_USERS', JSON.stringify(globalUsers));
-            }
+            } catch(e) {}
 
-            alert(`[${name}] 님의 회원가입이 완료되었습니다!\n이제 전체 임직원 및 관리자 화면에 즉시 표시됩니다.`);
+            alert(`[${name}] 님의 회원가입이 완료되었습니다!\n이제 로그인할 수 있습니다.`);
             document.getElementById('registerForm').reset();
             switchAuthTab('login');
             document.getElementById('loginId').value = id;
@@ -794,7 +805,6 @@
             if(document.getElementById('vacDays')) document.getElementById('vacDays').innerText = val + ' 일';
         }
 
-        // 전체 사용자의 결재 문서 목록 출력
         function renderDocList() {
             const tbody = document.getElementById('realDocTbody');
             if(!tbody) return;
@@ -838,10 +848,9 @@
             if (confirm(`문서번호 [${docId}]를 완전히 삭제하시겠습니까?`)) {
                 try {
                     await db.collection("documents").doc(docId).delete();
-                } catch(e) {
-                    delete globalDocs[docId];
-                    localStorage.setItem('HK_SHARED_DOCS', JSON.stringify(globalDocs));
-                }
+                } catch(e) {}
+                delete globalDocs[docId];
+                localStorage.setItem('HK_SHARED_DOCS', JSON.stringify(globalDocs));
                 alert('결재 문서가 삭제되었습니다.');
                 renderDocList();
                 updateBadges();
@@ -905,12 +914,12 @@
                 createdAt: Date.now()
             };
 
+            globalDocs[docId] = docData;
+            localStorage.setItem('HK_SHARED_DOCS', JSON.stringify(globalDocs));
+
             try {
                 await db.collection("documents").doc(docId).set(docData);
-            } catch(e) {
-                globalDocs[docId] = docData;
-                localStorage.setItem('HK_SHARED_DOCS', JSON.stringify(globalDocs));
-            }
+            } catch(e) {}
 
             alert('전자결재가 실시간으로 성공적으로 상신되었습니다!');
             updateBadges();
@@ -943,12 +952,12 @@
 
         async function approveDoc(docId) {
             if(globalDocs[docId]) {
+                globalDocs[docId].status = 'approved';
+                localStorage.setItem('HK_SHARED_DOCS', JSON.stringify(globalDocs));
+
                 try {
                     await db.collection("documents").doc(docId).update({ status: 'approved' });
-                } catch(e) {
-                    globalDocs[docId].status = 'approved';
-                    localStorage.setItem('HK_SHARED_DOCS', JSON.stringify(globalDocs));
-                }
+                } catch(e) {}
                 alert('성공적으로 결재 승인 처리되었습니다!');
                 updateBadges();
                 switchNavSection('sec-approval');
@@ -990,7 +999,6 @@
             });
         }
 
-        // 모든 가입 회원 전체 목록 실시간 조회
         function renderMemberList() {
             const tbody = document.getElementById('memberTbody');
             if(!tbody) return;
@@ -1030,12 +1038,12 @@
             }
 
             if (confirm(`정말로 계정 [${userId}] (${globalUsers[userId].name}) 님을 완전히 삭제하시겠습니까?`)) {
+                delete globalUsers[userId];
+                localStorage.setItem('HK_SHARED_USERS', JSON.stringify(globalUsers));
+
                 try {
                     await db.collection("users").doc(userId).delete();
-                } catch(e) {
-                    delete globalUsers[userId];
-                    localStorage.setItem('HK_SHARED_USERS', JSON.stringify(globalUsers));
-                }
+                } catch(e) {}
                 alert('계정이 성공적으로 삭제되었습니다.');
                 renderMemberList();
                 renderOrgAll();
@@ -1069,19 +1077,19 @@
             const pos = document.getElementById('userPos').value.trim();
             const dept = document.getElementById('userDept').value.trim();
 
-            if(!id || !name) return alert('필수 입력 항목이 누락되었습니다.');
+            if(!id || !name || !pw) return alert('아이디, 비밀번호, 성명은 필수 입력입니다.');
 
             const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
             
+            globalUsers[id] = u;
+            localStorage.setItem('HK_SHARED_USERS', JSON.stringify(globalUsers));
+
             try {
                 await db.collection("users").doc(id).set(u);
-            } catch(e) {
-                globalUsers[id] = u;
-                localStorage.setItem('HK_SHARED_USERS', JSON.stringify(globalUsers));
-            }
+            } catch(e) {}
 
-            alert('임직원 정보가 성공적으로 등록/수정되었습니다.');
-            closeModal('userModal');
+            alert('임직원 정보가 등록/수정되었습니다.');
+            closeModal('userModal'); // 계정 생성 팝업 자동 닫기!
             renderMemberList();
             renderOrgAll();
             updateBadges();
@@ -1156,11 +1164,11 @@
             const id = 'SCH-' + Date.now();
             const sch = { id, title, date, time };
 
+            globalSchedules[id] = sch;
+
             try {
                 await db.collection("schedules").doc(id).set(sch);
-            } catch(e) {
-                globalSchedules[id] = sch;
-            }
+            } catch(e) {}
 
             alert('일정이 정상 등록되었습니다.');
             closeModal('schModal');
@@ -1168,7 +1176,10 @@
             updateBadges();
         }
 
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function closeModal(id) { 
+            const modal = document.getElementById(id);
+            if(modal) modal.style.display = 'none'; 
+        }
         
         function updateBadges() {
             if(document.getElementById('cntBadge')) document.getElementById('cntBadge').innerText = Object.keys(globalDocs).length;
