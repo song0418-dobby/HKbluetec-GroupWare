@@ -592,8 +592,8 @@
             switchNavSection('sec-approval');
         }
 
-        // 회원가입 보완 처리
-        async function handleRegister(e) {
+        // 회원가입 실시간 연동
+        function handleRegister(e) {
             e.preventDefault();
 
             const rawId = document.getElementById('regId').value.trim();
@@ -603,33 +603,20 @@
             const pos = document.getElementById('regPos').value.trim();
             const dept = document.getElementById('regDept').value.trim();
 
-            if (!id) {
-                alert('유효한 아이디를 영문/숫자로 입력해 주세요.');
-                return;
-            }
-
-            if (globalUsers[id]) {
-                alert('이미 등록되었거나 사용 중인 아이디입니다. 로그인해 주세요.');
-                switchAuthTab('login');
-                document.getElementById('loginId').value = id;
-                return;
-            }
+            if (!id) return alert('아이디를 입력해 주세요.');
 
             const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
 
-            try {
-                await db.ref('users/' + id).set(newUser);
-            } catch(err) {
-                console.log(err);
-            }
-
-            globalUsers[id] = newUser;
-            renderMemberList();
-            renderOrgAll();
-            alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
-            document.getElementById('registerForm').reset();
-            switchAuthTab('login');
-            document.getElementById('loginId').value = id;
+            db.ref('users/' + id).set(newUser, (error) => {
+                if (error) {
+                    alert("저장 실패: Firebase 콘솔 규칙(Rules)을 확인하세요.");
+                } else {
+                    alert(`[${name}] 님의 회원가입이 완료되었습니다!\n바로 로그인하실 수 있습니다.`);
+                    document.getElementById('registerForm').reset();
+                    switchAuthTab('login');
+                    document.getElementById('loginId').value = id;
+                }
+            });
         }
 
         function handleLogout() {
@@ -835,7 +822,8 @@
             });
         }
 
-        async function submitNewDoc(docId) {
+        // 결재 상신 실시간 저장
+        function submitNewDoc(docId) {
             const title = document.getElementById('docTitleInput').value.trim();
             if(!title) return alert('문서 제목을 입력해 주세요!');
 
@@ -849,15 +837,14 @@
                 status: 'pending'
             };
 
-            try {
-                await db.ref('docs/' + docId).set(docData);
-            } catch(err) {
-                console.log(err);
-            }
-
-            globalDocs[docId] = docData;
-            alert('전자결재가 전사 실시간으로 상신되었습니다!');
-            switchNavSection('sec-approval');
+            db.ref('docs/' + docId).set(docData, (error) => {
+                if(error) {
+                    alert("상신 실패: DB 접근 권한을 확인해 주세요.");
+                } else {
+                    alert('전자결재가 전사 실시간으로 상신되었습니다!');
+                    switchNavSection('sec-approval');
+                }
+            });
         }
 
         function viewDetail(docId) {
@@ -882,15 +869,13 @@
             }
         }
 
-        async function approveDoc(docId) {
-            try {
-                await db.ref('docs/' + docId).update({ status: 'approved' });
-            } catch(err) {
-                console.log(err);
-            }
-            if(globalDocs[docId]) globalDocs[docId].status = 'approved';
-            alert('승인 처리되었습니다!');
-            switchNavSection('sec-approval');
+        function approveDoc(docId) {
+            db.ref('docs/' + docId).update({ status: 'approved' }, (error) => {
+                if(!error) {
+                    alert('승인 처리되었습니다!');
+                    switchNavSection('sec-approval');
+                }
+            });
         }
 
         function renderOrgAll() {
@@ -957,7 +942,8 @@
             document.getElementById('userModal').style.display = 'flex';
         }
 
-        async function saveUser() {
+        // 임직원 및 사원 추가 실시간 반영
+        function saveUser() {
             const rawId = document.getElementById('userIdInput').value.trim();
             const id = rawId.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
             const pw = String(document.getElementById('userPwInput').value.trim());
@@ -969,17 +955,14 @@
 
             const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
 
-            try {
-                await db.ref('users/' + id).set(u);
-            } catch(err) {
-                console.log(err);
-            }
-
-            globalUsers[id] = u;
-            renderMemberList();
-            renderOrgAll();
-            alert('임직원 정보가 실시간 반영되었습니다.');
-            closeModal('userModal');
+            db.ref('users/' + id).set(u, (error) => {
+                if(error) {
+                    alert("저장 실패: DB 권한을 확인하세요.");
+                } else {
+                    alert('임직원 정보가 실시간 반영되었습니다.');
+                    closeModal('userModal');
+                }
+            });
         }
 
         function renderCalendar() {
@@ -1042,7 +1025,8 @@
             document.getElementById('schModal').style.display = 'flex'; 
         }
         
-        async function saveSchedule() {
+        // 일정 등록 실시간 반영
+        function saveSchedule() {
             const title = document.getElementById('schTitle').value.trim();
             const date = document.getElementById('schDate').value;
             const time = document.getElementById('schTime').value;
@@ -1051,16 +1035,14 @@
             const id = 'SCH-' + Date.now();
             const sch = { id, title, date, time };
 
-            try {
-                await db.ref('schedules/' + id).set(sch);
-            } catch(err) {
-                console.log(err);
-            }
-
-            globalSchedules[id] = sch;
-            renderCalendar();
-            alert('일정이 등록되어 전사에 공유되었습니다.');
-            closeModal('schModal');
+            db.ref('schedules/' + id).set(sch, (error) => {
+                if(error) {
+                    alert("일정 저장 실패: DB 접근 권한을 확인하세요.");
+                } else {
+                    alert('일정이 등록되어 전사에 실시간 공유되었습니다.');
+                    closeModal('schModal');
+                }
+            });
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
