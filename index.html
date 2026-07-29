@@ -460,7 +460,7 @@
     </div>
 
     <script>
-        // FIREBASE INIT
+        // FIREBASE INITIALIZATION
         const firebaseConfig = {
             apiKey: "AIzaSyAgEmCFvCI7Ou8jPkfngObTLJGaYPQbz18",
             authDomain: "hkbluetec.firebaseapp.com",
@@ -476,16 +476,18 @@
         }
         const db = firebase.database();
 
+        // 기본 내장 계정 (DB 초기 연결 실패 대비 백업용)
         const DEFAULT_USERS = {
             'song0418_hk': { id: 'song0418_hk', pw: '1234', name: '송관리자', pos: '최고관리자', dept: '서비스관리팀', isOwner: true },
             'ceo01': { id: 'ceo01', pw: '1234', name: '김대표', pos: '대표이사', dept: '임원진' }
         };
 
         let currentUser = null;
-        let globalUsers = {};
+        let globalUsers = {...DEFAULT_USERS};
         let globalDocs = {};
         let globalSchedules = {};
 
+        // 실시간 연동 및 초기 데이터 로드
         function initRealtimeSync() {
             const savedSession = sessionStorage.getItem('HK_CURRENT_USER');
             if (savedSession) {
@@ -493,7 +495,9 @@
                     currentUser = JSON.parse(savedSession);
                     document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
                     document.getElementById('authScreen').style.display = 'none';
-                } catch(e) { sessionStorage.removeItem('HK_CURRENT_USER'); }
+                } catch(e) { 
+                    sessionStorage.removeItem('HK_CURRENT_USER'); 
+                }
             }
 
             // 1. 유저 정보 실시간 반영
@@ -503,18 +507,18 @@
                     globalUsers = data;
                 } else {
                     db.ref('groupware/users').update(DEFAULT_USERS);
-                    globalUsers = DEFAULT_USERS;
+                    globalUsers = {...DEFAULT_USERS};
                 }
                 renderMemberList(); renderOrgAll(); updateBadges(); populateUserSelects();
             });
 
-            // 2. 전자결재 문서
+            // 2. 전자결재 문서 실시간 반영
             db.ref('groupware/docs').on('value', (snapshot) => {
                 globalDocs = snapshot.val() || {};
                 renderDocList(); updateBadges();
             });
 
-            // 3. 캘린더 일정
+            // 3. 캘린더 일정 실시간 반영
             db.ref('groupware/schedules').on('value', (snapshot) => {
                 globalSchedules = snapshot.val() || {};
                 renderCalendar(); updateBadges();
@@ -534,47 +538,60 @@
             }
         }
 
-        // 로그인 검증 개편: 실시간 수신된 globalUsers 메모리 검증 방식 (멈춤 현상 완벽 해결)
-        function handleLogin(e) {
+        // 로그인 처리 (즉시 연결 및 백업 동기화)
+        async function handleLogin(e) {
             e.preventDefault();
             const btn = document.getElementById('btnLoginSubmit');
             btn.disabled = true;
-            btn.innerText = '검증 중...';
+            btn.innerText = '로그인 중...';
 
             const inputId = document.getElementById('loginId').value.trim().toLowerCase();
             const inputPw = document.getElementById('loginPw').value.trim();
 
-            setTimeout(() => {
-                try {
-                    // 메모리에 실시간 동기화된 회원목록에서 비교
-                    const user = globalUsers[inputId];
+            try {
+                let user = globalUsers[inputId];
 
-                    if (!user) {
-                        alert('존재하지 않는 아이디입니다.');
-                        return;
-                    }
+                // 메모리에 없을 경우 데이터베이스 실시간 재조회
+                if (!user) {
+                    const snapshot = await db.ref(`groupware/users/${inputId}`).once('value');
+                    user = snapshot.val();
+                }
 
-                    // 비밀번호 문자열 비교
-                    if (String(user.pw) !== String(inputPw)) {
-                        alert('비밀번호가 올바르지 않습니다.');
-                        return;
-                    }
+                if (!user) {
+                    alert('존재하지 않는 아이디입니다.');
+                    return;
+                }
 
-                    // 로그인 성공
-                    currentUser = user;
+                if (String(user.pw) !== String(inputPw)) {
+                    alert('비밀번호가 올바르지 않습니다.');
+                    return;
+                }
+
+                // 로그인 성공 처리
+                currentUser = user;
+                sessionStorage.setItem('HK_CURRENT_USER', JSON.stringify(currentUser));
+                document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
+                document.getElementById('authScreen').style.display = 'none';
+                
+                showSection('sec-approval');
+                renderDocList();
+
+            } catch (err) {
+                // DB 장애 상황 시 기본 계정 체크 fallback
+                if (DEFAULT_USERS[inputId] && String(DEFAULT_USERS[inputId].pw) === String(inputPw)) {
+                    currentUser = DEFAULT_USERS[inputId];
                     sessionStorage.setItem('HK_CURRENT_USER', JSON.stringify(currentUser));
                     document.getElementById('currentUserInfo').innerText = `${currentUser.name} (${currentUser.pos} / ${currentUser.dept})`;
                     document.getElementById('authScreen').style.display = 'none';
                     showSection('sec-approval');
                     renderDocList();
-
-                } catch (err) {
-                    alert('로그인 처리 중 오류 발생: ' + err.message);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerText = '로그인';
+                } else {
+                    alert('로그인 오류: 아이디와 비밀번호를 다시 확인하세요.');
                 }
-            }, 150);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '로그인';
+            }
         }
 
         function handleRegister(e) {
@@ -589,16 +606,16 @@
 
             const newUser = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
             
-            db.ref(`groupware/users/${id}`).set(newUser, (err) => {
-                if(!err) {
-                    alert('회원가입 완료! 로그인해 주세요.');
+            db.ref(`groupware/users/${id}`).set(newUser)
+                .then(() => {
+                    alert('회원가입이 완료되었습니다! 바로 로그인해 주세요.');
                     document.getElementById('registerForm').reset();
                     switchAuthTab('login');
                     document.getElementById('loginId').value = id;
-                } else {
+                })
+                .catch((err) => {
                     alert('가입 실패: ' + err.message);
-                }
-            });
+                });
         }
 
         function handleLogout() {
@@ -623,7 +640,7 @@
             if (val === '구매 품의서' || val === '지출 품의서') {
                 body.innerHTML = `
                     <table class="doc-table">
-                        <tr><th style="width:20%;">품의 목적</th><td colspan="3"><input type="text" class="form-control" value="사내 업무용 비품 및 소모품 구매 건"></td></tr>
+                        <tr><th style="width:20%;">품의 목적</th><td colspan="3"><input type="text" id="formPurpose" class="form-control" value="사내 업무용 비품 및 소모품 구매 건"></td></tr>
                         <tr><th style="width:20%;">납품 및 진행처</th><td><input type="text" class="form-control" value="HK블루텍 본사"></td><th style="width:20%;">지급 희망일</th><td><input type="date" class="form-control"></td></tr>
                     </table>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0 8px;">
@@ -696,6 +713,7 @@
 
         function addFormRow() {
             const tbody = document.getElementById('itemTbody');
+            if(!tbody) return;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><input type="text" class="form-control" placeholder="품목명 입력"></td>
@@ -730,22 +748,23 @@
             const vat = grandSub * 0.1;
             const grand = grandSub + vat;
 
-            document.getElementById('subTotal').innerText = grandSub.toLocaleString() + ' 원';
-            document.getElementById('vatTotal').innerText = vat.toLocaleString() + ' 원';
-            document.getElementById('grandTotal').innerText = grand.toLocaleString() + ' 원';
+            if(document.getElementById('subTotal')) document.getElementById('subTotal').innerText = grandSub.toLocaleString() + ' 원';
+            if(document.getElementById('vatTotal')) document.getElementById('vatTotal').innerText = vat.toLocaleString() + ' 원';
+            if(document.getElementById('grandTotal')) document.getElementById('grandTotal').innerText = grand.toLocaleString() + ' 원';
         }
 
         function calculateExpTotal() {
             const price = parseFloat(document.querySelector('.cal-price').value) || 0;
-            document.getElementById('expTotal').innerText = price.toLocaleString() + ' 원';
+            if(document.getElementById('expTotal')) document.getElementById('expTotal').innerText = price.toLocaleString() + ' 원';
         }
 
         function updateVacDays(val) {
-            document.getElementById('vacDays').innerText = val + ' 일';
+            if(document.getElementById('vacDays')) document.getElementById('vacDays').innerText = val + ' 일';
         }
 
         function renderDocList() {
             const tbody = document.getElementById('realDocTbody');
+            if(!tbody) return;
             tbody.innerHTML = '';
             const docsList = Object.values(globalDocs);
 
@@ -813,34 +832,39 @@
                 status: 'pending'
             };
 
-            db.ref(`groupware/docs/${docId}`).set(docData, (err) => {
-                if(!err) {
-                    alert('전자결재가 상신되었습니다!');
+            db.ref(`groupware/docs/${docId}`).set(docData)
+                .then(() => {
+                    alert('전자결재가 실시간 상신되었습니다!');
                     showSection('sec-approval');
-                }
-            });
+                })
+                .catch(err => alert('상신 오류: ' + err.message));
         }
 
         function viewDetail(docId) {
             showSection('sec-form');
             const d = globalDocs[docId];
+            if(!d) return;
             document.getElementById('docNum').innerText = d.id;
             document.getElementById('docDept').innerText = d.dept;
             document.getElementById('docDate').innerText = d.date;
             document.getElementById('docTitleInput').value = d.title;
             document.getElementById('app0Box').innerText = d.author;
 
-            document.getElementById('actionArea').innerHTML = `<button class="btn btn-success" onclick="approveDoc('${d.id}')">승인 처리</button>`;
+            document.getElementById('actionArea').innerHTML = `<button class="btn btn-success" onclick="approveDoc('${d.id}')"><i class="fa-solid fa-check"></i> 즉시 승인 처리</button>`;
         }
 
         function approveDoc(docId) {
-            db.ref(`groupware/docs/${docId}`).update({ status: 'approved' });
-            alert('최종 승인 완료되었습니다.');
-            showSection('sec-approval');
+            db.ref(`groupware/docs/${docId}`).update({ status: 'approved' })
+                .then(() => {
+                    alert('실시간 승인 처리가 완료되었습니다.');
+                    showSection('sec-approval');
+                })
+                .catch(err => alert('승인 오류: ' + err.message));
         }
 
         function renderOrgAll() {
             const container = document.getElementById('visualOrgContainer');
+            if(!container) return;
             const users = Object.values(globalUsers);
             if(users.length === 0) return;
 
@@ -866,6 +890,7 @@
             container.innerHTML = html;
 
             const tbody = document.getElementById('orgTbody');
+            if(!tbody) return;
             tbody.innerHTML = '';
             users.forEach(u => {
                 tbody.innerHTML += `<tr><td>${u.id}</td><td><strong>${u.name}</strong></td><td>${u.pos}</td><td>${u.dept}</td><td><button class="btn" style="padding:2px 6px;" onclick="openUserModal('${u.id}')">수정</button></td></tr>`;
@@ -874,6 +899,7 @@
 
         function renderMemberList() {
             const tbody = document.getElementById('memberTbody');
+            if(!tbody) return;
             tbody.innerHTML = '';
             Object.values(globalUsers).forEach(u => {
                 const isOwner = u.id === 'song0418_hk' || u.isOwner;
@@ -910,49 +936,70 @@
             if(!id || !name) return alert('필수 입력 항목이 누락되었습니다.');
 
             const u = { id, pw, name, pos, dept, isOwner: (id === 'song0418_hk') };
-            db.ref(`groupware/users/${id}`).set(u, (err) => {
-                if(!err) {
-                    alert('임직원 정보가 등록/수정되었습니다.');
+            db.ref(`groupware/users/${id}`).set(u)
+                .then(() => {
+                    alert('임직원 정보가 실시간 저장되었습니다.');
                     closeModal('userModal');
-                }
-            });
+                })
+                .catch(err => alert('저장 실패: ' + err.message));
         }
 
         function renderCalendar() {
             const grid = document.getElementById('calCellsGrid');
+            if(!grid) return;
             grid.innerHTML = '';
-            for(let i = 0; i < 35; i++) {
+            
+            // 등록된 일정 목록
+            const schedulesList = Object.values(globalSchedules);
+
+            for(let i = 1; i <= 31; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'calendar-cell';
-                cell.innerHTML = `<div class="calendar-date-num">${(i % 31) + 1}</div>`;
+                let daySchedules = schedulesList.filter(s => {
+                    if(!s.date) return false;
+                    const dayNum = parseInt(s.date.split('-')[2]);
+                    return dayNum === i;
+                });
+
+                let schHtml = '';
+                daySchedules.forEach(s => {
+                    schHtml += `<div style="background:#e0f2fe; color:#0284c7; font-size:10px; padding:2px; border-radius:3px; margin-top:2px; font-weight:700; truncate">${s.title}</div>`;
+                });
+
+                cell.innerHTML = `<div class="calendar-date-num">${i}</div>${schHtml}`;
                 grid.appendChild(cell);
             }
         }
 
         function openScheduleModal() { document.getElementById('schModal').style.display = 'flex'; }
+        
         function saveSchedule() {
             const title = document.getElementById('schTitle').value;
             const date = document.getElementById('schDate').value;
             const time = document.getElementById('schTime').value;
-            const id = 'SCH-' + Date.now();
+            if(!title || !date) return alert('일정 제목과 날짜를 입력하세요.');
 
+            const id = 'SCH-' + Date.now();
             const sch = { id, title, date, time };
-            db.ref(`groupware/schedules/${id}`).set(sch, (err) => {
-                if(!err) {
-                    alert('일정이 등록되었습니다.');
+
+            db.ref(`groupware/schedules/${id}`).set(sch)
+                .then(() => {
+                    alert('일정이 실시간 반영 등록되었습니다.');
                     closeModal('schModal');
-                }
-            });
+                })
+                .catch(err => alert('일정 저장 실패: ' + err.message));
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
         function updateBadges() {
-            document.getElementById('cntBadge').innerText = Object.keys(globalDocs).length;
-            document.getElementById('dashCount').innerText = Object.keys(globalDocs).length;
-            document.getElementById('dashSchCount').innerText = Object.keys(globalSchedules).length;
-            document.getElementById('dashMemCount').innerText = Object.keys(globalUsers).length;
+            if(document.getElementById('cntBadge')) document.getElementById('cntBadge').innerText = Object.keys(globalDocs).length;
+            if(document.getElementById('dashCount')) document.getElementById('dashCount').innerText = Object.keys(globalDocs).length;
+            if(document.getElementById('dashSchCount')) document.getElementById('dashSchCount').innerText = Object.keys(globalSchedules).length;
+            if(document.getElementById('dashMemCount')) document.getElementById('dashMemCount').innerText = Object.keys(globalUsers).length;
         }
 
+        // 페이지 로드 시 실시간 연동 시작
         window.onload = initRealtimeSync;
     </script>
 </body>
